@@ -1,0 +1,24 @@
+# Enhanced Hash Benchmark Framework Requirements
+# Version 3.0.0 - Comprehensive Analysis
+
+# Core scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Cryptographic libraries
+blake3>=0.3.3
+
+# Visualization and reporting
+matplotlib>=3.6.0
+seaborn>=0.12.0
+tabulate>=0.9.0
+
+# System monitoring
+psutil>=5.9.0
+
+# Development and testing (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Documentation generation (optional)
+jupyter>=1.0.0
