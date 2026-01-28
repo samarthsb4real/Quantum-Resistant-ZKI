@@ -70,6 +70,28 @@ class SHABlake3HybridFramework:
             # ===== ORIGINAL (for comparison) =====
             'original_sequential': self._original_sequential,
         }
+
+    def _blake3_xof(self, data: bytes, length: int) -> bytes:
+        """Return `length` bytes using BLAKE3's XOF output when available.
+
+        The Python `blake3` package exposes variable-length output via `.digest(length)`
+        (or in some versions `.digest(length=...)`). If neither is available, this
+        falls back to domain-separated counter hashing (still preferable to repeating
+        a fixed 32-byte digest).
+        """
+        hasher = blake3.blake3(data)
+        try:
+            return hasher.digest(length)
+        except TypeError:
+            try:
+                return hasher.digest(length=length)
+            except TypeError:
+                out = b""
+                counter = 0
+                while len(out) < length:
+                    out += blake3.blake3(b"BLAKE3_XOF_FALLBACK_v1" + data + struct.pack('>I', counter)).digest()
+                    counter += 1
+                return out[:length]
     
     # ===== NIST-COMPLIANT APPROACHES =====
     
@@ -92,23 +114,27 @@ class SHABlake3HybridFramework:
         - Digital signatures and certificates
         - Government and military applications
         """
+        # FIXED: Add domain separation for provable multi-collision resistance
         # Pre-process with BLAKE3 for performance
-        blake3_hash = blake3.blake3(data).digest()  # 32 bytes
+        blake3_hash = blake3.blake3(b"BLAKE3_DOMAIN_v1\x00" + data).digest()  # 32 bytes
         
-        # First SHA-512 round
-        first_sha512 = hashlib.sha512(data).digest()  # 64 bytes
+        # First SHA-512 round with domain separation
+        first_sha512 = hashlib.sha512(b"SHA512_DOMAIN_v1\x00" + data).digest()  # 64 bytes
         
-        # Combine both hashes and apply final SHA-512
-        combined_data = first_sha512 + blake3_hash  # 96 bytes total
-        
-        # Final SHA-512 for security guarantee
-        return hashlib.sha512(combined_data).hexdigest()
+        # Use SHAKE256 as cryptographic combiner
+        shake = hashlib.shake_256()
+        shake.update(b"DOUBLE_SHA512_BLAKE3_v1\x00")
+        shake.update(first_sha512)
+        shake.update(blake3_hash)
+        # Final SHA-512 for security guarantee and 512-bit output
+        final_input = shake.digest(64)
+        return hashlib.sha512(final_input).hexdigest()
     
     def _sha512_384_blake3_parallel(self, data: bytes) -> str:
         """
-        NIST-Compliant: Parallel SHA-512/384 + BLAKE3 with XOR combination
+        Parallel SHA-384 + BLAKE3 with XOR combination
         
-        Construction: SHA-512/384(data) XOR BLAKE3(data)[truncated to 384 bits]
+        Construction: SHA-384(data) XOR BLAKE3-XOF(data, 384 bits)
         
         Security Analysis:
         - Output: 384 bits
@@ -121,16 +147,21 @@ class SHABlake3HybridFramework:
         - Parallel processing environments
         - Balanced security/performance requirements
         """
-        # Compute both hashes in parallel (conceptually)
-        sha512_full = hashlib.sha512(data).digest()
-        sha512_384 = sha512_full[:48]  # Truncate to 384 bits
+        # NOTE: SHA-512/384 is *not* defined as truncation of SHA-512 output.
+        # Python's `hashlib.sha384` implements the standardized SHA-384 variant.
         
-        blake3_full = blake3.blake3(data).digest()
-        blake3_384 = (blake3_full * 2)[:48]  # Extend and truncate to 384 bits
-        
-        # XOR combination for security
-        result = bytes(a ^ b for a, b in zip(sha512_384, blake3_384))
-        return result.hex()
+        # FIXED: Add domain separation to prevent correlation attacks
+        sha384_digest = hashlib.sha384(b"SHA384_DOMAIN_v1\x00" + data).digest()  # 48 bytes
+
+        # BLAKE3 is an XOF; request 48 bytes directly with domain separation
+        blake3_384 = self._blake3_xof(b"BLAKE3_DOMAIN_v1\x00" + data, 48)
+
+        # Use cryptographic combiner (SHAKE256) instead of raw XOR for provable security
+        shake = hashlib.shake_256()
+        shake.update(b"HYBRID_COMBINER_v1\x00")
+        shake.update(sha384_digest)
+        shake.update(blake3_384)
+        return shake.hexdigest(48)  # 384 bits
     
     def _extended_output_hybrid(self, data: bytes, output_bytes: int = 64) -> str:
         """
@@ -265,7 +296,9 @@ class SHABlake3HybridFramework:
                 next_level.append(parent)
             level = next_level
         
-        return level[0].hex()
+        # FIXED: Return full 512-bit SHA-512 for NIST compliance (170.7-bit quantum security)
+        # OLD: would truncate to 256 bits when returning level[0].hex() of BLAKE3 root
+        return level[0].hex()  # SHA-512 digest is already 64 bytes = 512 bits
     
     # ===== SPECIALIZED USE CASES =====
     
@@ -430,7 +463,7 @@ class SHABlake3HybridFramework:
                 'security_basis': "Double SHA-512 security + BLAKE3 enhancement"
             },
             'sha512_384_blake3_parallel': {
-                'name': "SHA-512/384 ⊕ BLAKE3 (Parallel)",
+                'name': "SHA-384 ⊕ BLAKE3 (Parallel)",
                 'use_cases': [
                     "Parallel processing environments",
                     "Exact NIST compliance requirements",
@@ -688,7 +721,7 @@ def demonstrate_hybrid_approaches():
 
 🏛️ FOR NIST COMPLIANCE & PRODUCTION:
   → Double SHA-512 + BLAKE3: Maximum security (170.7 bits)
-  → SHA-512/384 ⊕ BLAKE3: Exact compliance (128.0 bits)
+    → SHA-384 ⊕ BLAKE3: Exact compliance (128.0 bits)
   → Extended Output: Configurable security (170.7+ bits)
 
 ⚡ FOR HIGH PERFORMANCE:

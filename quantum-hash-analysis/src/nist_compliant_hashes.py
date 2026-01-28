@@ -1,30 +1,12 @@
 #!/usr/bin/env python3
-"""
-NIST Compliance Patch for Enhanced Hash Benchmark
-==================================================
+"""NIST-oriented hash options for the analysis framework.
 
-This patch modifies the existing enhanced_hash_benchmark.py to include
-NIST-compliant from nist_compliance_patch import get_nist_compliant_hash_functions, cleanup_old_results
+This module provides a small set of *standardized* primitives (SHA-2/SHA-3 family)
+and conservative compositions that can meet a ≥128-bit quantum collision-security
+target under the simple BHT/Grover bit-security model used elsewhere in this repo.
 
-# Clean up old results automatically
-cleanup_old_results()
-
-security_levels = get_quantum_security_levels()
-algorithm_security = security_levels.get(algorithm_name, {})
-
-# Use algorithm_security for accurate quantum security calculations
-quantum_collision_security = algorithm_security.get("quantum_collision", digest_bits / 3)
-quantum_preimage_security = algorithm_security.get("quantum_preimage", digest_bits / 2)
-nist_compliant = algorithm_security.get("nist_compliant", False)osition approaches that meet quantum security requirements.
-
-Integration Instructions:
-1. Replace the _composite_hash method in EnhancedHashBenchmark class
-2. Add new hash functions to the hash_functions list
-3. Update quantum security analysis for new approaches
-
-Author: Enhanced Implementation - NIST Compliance Patch
-Date: September 30, 2025
-Version: 4.1.0 - NIST Integration Patch
+Note: “Meets NIST Level 1 security target” is not the same as “NIST approved for
+your compliance regime”. Treat these as engineering options, not certifications.
 """
 
 import hashlib
@@ -70,17 +52,18 @@ class NISTCompliantHashMethods:
         return hashlib.sha512(first_hash).hexdigest()
     
     @staticmethod
-    def sha512_384_truncated(data: bytes, algorithm_name: str = "SHA-512/384") -> str:
+    def sha512_384_truncated(data: bytes, algorithm_name: str = "SHA-384") -> str:
         """
-        SHA-512 truncated to 384 bits (NIST standardized)
+        SHA-384 (often discussed alongside SHA-512/384 in codebases)
         
         Provides exactly 128.0-bit quantum collision security
         ✅ NIST Level 1 compliant (exactly)
         ✅ Best performance
         ✅ Standardized approach
         """
-        full_hash = hashlib.sha512(data).digest()
-        return full_hash[:48].hex()  # 384 bits = 48 bytes
+        # Important: SHA-512/384 is *not* defined as truncation of SHA-512 output.
+        # Python's `hashlib.sha384` implements the standardized SHA-384 variant.
+        return hashlib.sha384(data).hexdigest()
     
     @staticmethod
     def double_sha512(data: bytes, algorithm_name: str = "Double SHA-512") -> str:
@@ -128,8 +111,8 @@ def get_nist_compliant_hash_functions() -> Dict[str, Callable[[bytes, str], str]
         "Double SHA-512 Composition": NISTCompliantHashMethods.double_sha512_composition,
         # 170.7-bit quantum security, conservative approach, RECOMMENDED
         
-        "SHA-512/384 (Truncated)": NISTCompliantHashMethods.sha512_384_truncated,
-        # Exactly 128.0-bit quantum security, best performance, NIST standardized
+        "SHA-384 (FIPS 180-4)": NISTCompliantHashMethods.sha512_384_truncated,
+        # Exactly 128.0-bit quantum collision security, best performance, standardized
         
         "Double SHA-512": NISTCompliantHashMethods.double_sha512,
         # 170.7-bit quantum security, simple implementation, conservative
@@ -272,7 +255,7 @@ def demonstrate_integration():
     
     print(f"✅ NIST-Compliant Algorithms: {compliant_count}/{total_count}")
     print(f"🎯 Recommended for Production: Double SHA-512 Composition")
-    print(f"⚡ Best Performance: SHA-512/384 (Truncated)")
+    print(f"⚡ Best Performance: SHA-384 (FIPS 180-4)")
     print(f"🔒 Most Conservative: Double SHA-512")
     print(f"🔮 Most Future-Proof: SHAKE256-512")
     
