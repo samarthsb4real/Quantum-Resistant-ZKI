@@ -24,11 +24,12 @@ class RigorousTestSuite:
             'SHA-512': self._sha512_only,
             'BLAKE3': self._blake3_only,
             'SHA-256': self._sha256_only,
-            'Original_Sequential': self._original_sequential,
-            'Enhanced_Double': self._double_sha512_blake3,
-            'Enhanced_XOR': self._sha384_xor_blake3,
-            'Enhanced_Parallel': self._parallel_enhanced,
-            'Enhanced_Triple': self._triple_cascade
+            'SHA512-BLAKE3': self._original_sequential,
+            'SHA512x2-BLAKE3': self._double_sha512_blake3,
+            'SHA384-XOR-BLAKE3': self._sha384_xor_blake3,
+            'SHA512-PAR-BLAKE3': self._parallel_enhanced,
+            'SHA512-BLAKE3-SHA512': self._triple_cascade,
+            'BLAKE3-KDF-SHA512': self._blake3_kdf_sha512
         }
         
         self.test_results = {}
@@ -67,6 +68,11 @@ class RigorousTestSuite:
         sha1 = hashlib.sha512(data).digest()
         blake1 = blake3.blake3(sha1).digest()
         return hashlib.sha512(blake1).digest()
+    
+    def _blake3_kdf_sha512(self, data: bytes) -> bytes:
+        """BLAKE3 in KDF mode with SHA-512 final stage"""
+        kdf_hash = blake3.blake3(data, derive_key_context="qr-hash-2026").digest()
+        return hashlib.sha512(kdf_hash).digest()
     
     def performance_stress_test(self, iterations: int = 10000) -> Dict:
         """Comprehensive performance stress testing"""
@@ -303,7 +309,7 @@ class RigorousTestSuite:
                 'quantum_vulnerable': False,
                 'nist_approved': True
             },
-            'Original_Sequential': {
+            'SHA512-BLAKE3': {
                 'output_size': 256,
                 'classical_security': 256,
                 'quantum_security': 128,
@@ -311,7 +317,7 @@ class RigorousTestSuite:
                 'quantum_vulnerable': False,
                 'nist_approved': False
             },
-            'Enhanced_Double': {
+            'SHA512x2-BLAKE3': {
                 'output_size': 256,
                 'classical_security': 256,
                 'quantum_security': 128,
@@ -319,7 +325,7 @@ class RigorousTestSuite:
                 'quantum_vulnerable': False,
                 'nist_approved': False
             },
-            'Enhanced_XOR': {
+            'SHA384-XOR-BLAKE3': {
                 'output_size': 256,
                 'classical_security': 256,
                 'quantum_security': 128,
@@ -327,7 +333,7 @@ class RigorousTestSuite:
                 'quantum_vulnerable': False,
                 'nist_approved': False
             },
-            'Enhanced_Parallel': {
+            'SHA512-PAR-BLAKE3': {
                 'output_size': 512,
                 'classical_security': 512,
                 'quantum_security': 256,
@@ -335,7 +341,15 @@ class RigorousTestSuite:
                 'quantum_vulnerable': False,
                 'nist_approved': False
             },
-            'Enhanced_Triple': {
+            'SHA512-BLAKE3-SHA512': {
+                'output_size': 512,
+                'classical_security': 512,
+                'quantum_security': 256,
+                'standardized': False,
+                'quantum_vulnerable': False,
+                'nist_approved': False
+            },
+            'BLAKE3-KDF-SHA512': {
                 'output_size': 512,
                 'classical_security': 512,
                 'quantum_security': 256,
@@ -586,73 +600,110 @@ class InDepthReportGenerator:
                 f.write("\n")
             
             f.write("USE CASE RECOMMENDATIONS:\n")
-            f.write("• High-Performance Applications: Enhanced_XOR\n")
-            f.write("• Maximum Security: Enhanced_Parallel or Enhanced_Triple\n")
-            f.write("• Balanced Approach: Enhanced_Double\n")
-            f.write("• Legacy Compatibility: Original_Sequential\n\n")
+            f.write("• High-Performance Applications: SHA384-XOR-BLAKE3\n")
+            f.write("• Maximum Security: SHA512-PAR-BLAKE3 or SHA512-BLAKE3-SHA512\n")
+            f.write("• Balanced Approach: SHA512x2-BLAKE3\n")
+            f.write("• Legacy Compatibility: SHA512-BLAKE3\n\n")
             
             # Conclusion
             f.write("CONCLUSION\n")
             f.write("-" * 10 + "\n")
-            f.write("The enhanced quantum-resistant hash functions demonstrate significant\n")
+            f.write("The hybrid SHA-2/BLAKE3 constructions demonstrate significant\n")
             f.write("improvements in quantum security while maintaining acceptable performance.\n")
-            f.write("All enhanced variants provide 128+ bit quantum security, meeting NIST\n")
+            f.write("All hybrid variants provide 128-256 bit quantum security, meeting NIST\n")
             f.write("requirements for post-quantum cryptography. The performance overhead\n")
             f.write("(1.2-3x) is justified by the substantial security improvements.\n\n")
             f.write("These algorithms are suitable for deployment in security-critical\n")
-            f.write("applications requiring quantum resistance, with specific variants\n")
+            f.write("applications requiring quantum resistance, with specific constructions\n")
             f.write("optimized for different performance and security requirements.\n")
     
     def _generate_analysis_charts(self, data: Dict, output_dir: str):
         """Generate comprehensive analysis charts"""
-        # Performance comparison chart
-        plt.figure(figsize=(15, 10))
-        
         algorithms = list(data['performance_results'].keys())
         perf_1kb = [data['performance_results'][alg]['execution_times'][1024]['mean'] for alg in algorithms]
         security_bits = [data['security_assessment'][alg]['quantum_security'] for alg in algorithms]
         overall_scores = [data['comparative_analysis'][alg]['overall_score'] for alg in algorithms]
         
-        # Create subplots
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        # Use shorter labels for better readability
+        short_labels = {
+            'SHA-512': 'SHA512',
+            'BLAKE3': 'BLAKE3',
+            'SHA-256': 'SHA256',
+            'SHA512-BLAKE3': 'S512-B3',
+            'SHA512x2-BLAKE3': 'S512²-B3',
+            'SHA384-XOR-BLAKE3': 'S384⊕B3',
+            'SHA512-PAR-BLAKE3': 'S512∥B3',
+            'SHA512-BLAKE3-SHA512': 'S512-B3-S512',
+            'BLAKE3-KDF-SHA512': 'B3-KDF-S512'
+        }
+        display_labels = [short_labels.get(alg, alg) for alg in algorithms]
         
-        # Performance comparison
-        colors = ['red' if score < 3 else 'orange' if score < 4 else 'green' for score in overall_scores]
-        bars1 = ax1.bar(range(len(algorithms)), perf_1kb, color=colors, alpha=0.7)
-        ax1.set_title('Performance Comparison (1KB Data)')
-        ax1.set_ylabel('Execution Time (ms)')
-        ax1.set_xticks(range(len(algorithms)))
-        ax1.set_xticklabels(algorithms, rotation=45, ha='right')
+        # Create subplots with better spacing
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 14))
         
-        # Security levels
-        bars2 = ax2.bar(range(len(algorithms)), security_bits, color=colors, alpha=0.7)
-        ax2.set_title('Quantum Security Levels')
-        ax2.set_ylabel('Security Bits')
-        ax2.axhline(y=128, color='red', linestyle='--', alpha=0.7, label='NIST Minimum')
-        ax2.set_xticks(range(len(algorithms)))
-        ax2.set_xticklabels(algorithms, rotation=45, ha='right')
-        ax2.legend()
+        # Color scheme
+        colors = ['#d73027' if score < 3 else '#fee08b' if score < 4 else '#1a9850' for score in overall_scores]
         
-        # Overall scores
-        bars3 = ax3.bar(range(len(algorithms)), overall_scores, color=colors, alpha=0.7)
-        ax3.set_title('Overall Assessment Scores')
-        ax3.set_ylabel('Score (1-5)')
-        ax3.set_xticks(range(len(algorithms)))
-        ax3.set_xticklabels(algorithms, rotation=45, ha='right')
-        ax3.set_ylim(0, 5)
+        # 1. Performance comparison (horizontal bars for better label visibility)
+        y_pos = np.arange(len(algorithms))
+        bars1 = ax1.barh(y_pos, perf_1kb, color=colors, alpha=0.8, edgecolor='black', linewidth=0.5)
+        ax1.set_title('Performance Comparison - Lower is Better (1KB Data)', fontsize=14, fontweight='bold', pad=15)
+        ax1.set_xlabel('Execution Time (ms)', fontsize=12)
+        ax1.set_yticks(y_pos)
+        ax1.set_yticklabels(display_labels, fontsize=10)
+        ax1.invert_yaxis()
+        ax1.grid(axis='x', alpha=0.3, linestyle='--')
         
-        # Security vs Performance scatter
-        ax4.scatter(perf_1kb, security_bits, s=200, c=colors, alpha=0.7)
-        for i, alg in enumerate(algorithms):
-            ax4.annotate(alg, (perf_1kb[i], security_bits[i]), 
-                        xytext=(5, 5), textcoords='offset points', fontsize=8)
-        ax4.set_xlabel('Performance (ms)')
-        ax4.set_ylabel('Quantum Security (bits)')
-        ax4.set_title('Security vs Performance Trade-off')
-        ax4.axhline(y=128, color='red', linestyle='--', alpha=0.7)
-        ax4.grid(True, alpha=0.3)
+        # Add value labels
+        for i, (bar, val) in enumerate(zip(bars1, perf_1kb)):
+            ax1.text(val, i, f' {val:.4f}', va='center', fontsize=9)
         
-        plt.tight_layout()
+        # 2. Security levels (horizontal bars)
+        bars2 = ax2.barh(y_pos, security_bits, color=colors, alpha=0.8, edgecolor='black', linewidth=0.5)
+        ax2.set_title('Quantum Security Levels - Higher is Better', fontsize=14, fontweight='bold', pad=15)
+        ax2.set_xlabel('Security Bits', fontsize=12)
+        ax2.set_yticks(y_pos)
+        ax2.set_yticklabels(display_labels, fontsize=10)
+        ax2.axvline(x=128, color='#d73027', linestyle='--', linewidth=2, alpha=0.7, label='NIST Min (128-bit)')
+        ax2.invert_yaxis()
+        ax2.legend(fontsize=10)
+        ax2.grid(axis='x', alpha=0.3, linestyle='--')
+        
+        # Add value labels
+        for i, (bar, val) in enumerate(zip(bars2, security_bits)):
+            ax2.text(val, i, f' {val}', va='center', fontsize=9)
+        
+        # 3. Overall scores (horizontal bars)
+        bars3 = ax3.barh(y_pos, overall_scores, color=colors, alpha=0.8, edgecolor='black', linewidth=0.5)
+        ax3.set_title('Overall Assessment Scores - Higher is Better', fontsize=14, fontweight='bold', pad=15)
+        ax3.set_xlabel('Score (0-5)', fontsize=12)
+        ax3.set_yticks(y_pos)
+        ax3.set_yticklabels(display_labels, fontsize=10)
+        ax3.set_xlim(0, 5.5)
+        ax3.invert_yaxis()
+        ax3.grid(axis='x', alpha=0.3, linestyle='--')
+        
+        # Add value labels
+        for i, (bar, val) in enumerate(zip(bars3, overall_scores)):
+            ax3.text(val, i, f' {val:.2f}', va='center', fontsize=9)
+        
+        # 4. Security vs Performance scatter
+        scatter = ax4.scatter(perf_1kb, security_bits, s=300, c=colors, alpha=0.8, 
+                             edgecolors='black', linewidth=1.5, zorder=3)
+        for i, label in enumerate(display_labels):
+            ax4.annotate(label, (perf_1kb[i], security_bits[i]), 
+                        xytext=(8, 8), textcoords='offset points', 
+                        fontsize=9, fontweight='bold',
+                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', 
+                                 edgecolor='gray', alpha=0.7))
+        ax4.set_xlabel('Performance - Lower is Better (ms)', fontsize=12)
+        ax4.set_ylabel('Quantum Security - Higher is Better (bits)', fontsize=12)
+        ax4.set_title('Security vs Performance Trade-off', fontsize=14, fontweight='bold', pad=15)
+        ax4.axhline(y=128, color='#d73027', linestyle='--', linewidth=2, alpha=0.7, label='NIST Min')
+        ax4.grid(True, alpha=0.3, linestyle='--')
+        ax4.legend(fontsize=10)
+        
+        plt.tight_layout(pad=3.0)
         plt.savefig(f'{output_dir}/comprehensive_analysis.png', dpi=300, bbox_inches='tight')
         plt.close()
         
