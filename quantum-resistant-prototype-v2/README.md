@@ -11,6 +11,18 @@ python nist_validator.py
 
 # Comprehensive testing
 python test_suite.py
+
+# Comprehensive v2 security/performance test cases
+python test_cases_v2_comprehensive.py
+
+# Attack performance analysis (Birthday, Grover, BHT)
+python attack_performance_analysis.py
+
+# Attack analysis with BLAKE3-KDF-SHA512 highlighted
+python attack_performance_analysis.py
+
+# Cross-run trend analysis for comparative benchmarking
+python attack_trend_analysis.py --limit 15
 ```
 
 ## Interactive Tools

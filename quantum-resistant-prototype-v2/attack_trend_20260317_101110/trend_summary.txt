@@ -1,0 +1,17 @@
+ATTACK TREND ANALYSIS SUMMARY
+============================================================
+Generated: 2026-03-17T10:11:13.128598
+Runs analyzed: 5
+Highlighted algorithm: **BLAKE3-KDF-SHA512**
+Latest run: 20260317_101102
+
+Latest attack-wise normalized metrics:
+- SHA-512: birthday=1.0000, grover=0.3448, bht=0.3448
+- BLAKE3: birthday=0.0000, grover=0.0000, bht=0.0000
+- SHA-256: birthday=0.8344, grover=0.0000, bht=0.0000
+- SHA512-BLAKE3: birthday=0.4369, grover=0.0000, bht=0.0000
+- SHA512x2-BLAKE3: birthday=0.6179, grover=0.0000, bht=0.0000
+- SHA384-XOR-BLAKE3: birthday=0.4957, grover=0.0000, bht=0.0000
+- SHA512-PAR-BLAKE3: birthday=0.1061, grover=1.0000, bht=1.0000
+- SHA512-BLAKE3-SHA512: birthday=0.3313, grover=0.9575, bht=0.9575
+- BLAKE3-KDF-SHA512: birthday=0.6228, grover=0.7992, bht=0.7992

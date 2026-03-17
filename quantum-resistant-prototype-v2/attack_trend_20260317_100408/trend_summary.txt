@@ -1,0 +1,13 @@
+ATTACK TREND ANALYSIS SUMMARY
+============================================================
+Generated: 2026-03-17T10:04:10.649687
+Runs analyzed: 4
+MVP: blake3_kdf_sha512 (blake3_kdf_sha512)
+Latest run: 20260317_100356
+
+Latest attack-wise normalized metrics:
+- sha512_blake3_sequential: birthday=0.0000, grover=0.0000, bht=0.0000
+- double_sha512_blake3: birthday=0.0000, grover=0.0000, bht=0.0000
+- sha512_384_xor_blake3: birthday=0.0000, grover=0.0000, bht=0.0000
+- parallel_sha_blake3: birthday=0.0000, grover=0.0000, bht=0.0000
+- blake3_kdf_sha512: birthday=0.0000, grover=0.0000, bht=0.0000

@@ -1,0 +1,12 @@
+ATTACK TREND ANALYSIS SUMMARY
+============================================================
+Generated: 2026-03-17T09:47:48.677382
+Runs analyzed: 2
+MVP: Enhanced XOR (SHA-384 ⊕ BLAKE3) (xor)
+Latest run: 20260317_094736
+
+Latest comparative scores:
+- Original Sequential (SHA-512 -> BLAKE3): 0.3947
+- Enhanced Double (SHA-512 x2 -> BLAKE3): 0.2996
+- Enhanced XOR (SHA-384 ⊕ BLAKE3): 0.0000
+- Enhanced Parallel (SHA-512(SHA-512||BLAKE3)): 0.9032
