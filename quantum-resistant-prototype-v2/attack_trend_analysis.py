@@ -20,6 +20,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def _add_better_tag(tag: str, axis=None):
+    target_axis = axis if axis is not None else plt.gca()
+    target_axis.text(
+        0.01,
+        0.98,
+        f"Interpretation: {tag}",
+        transform=target_axis.transAxes,
+        ha="left",
+        va="top",
+        fontsize=9,
+        bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "#666666", "boxstyle": "round,pad=0.3"},
+    )
+
+
 def _load_reports(base_dir: str, limit: int = 15) -> List[Tuple[str, Dict]]:
     candidates = sorted(glob.glob(os.path.join(base_dir, "attack_analysis_*")))
     reports: List[Tuple[str, Dict]] = []
@@ -93,6 +107,8 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
     score_series = {k: [] for k in keys}
     grover_series = {k: [] for k in keys}
     bht_series = {k: [] for k in keys}
+    qiskit_available_series = []
+    qiskit_grover_success_series = []
 
     for _, report in reports:
         for k in keys:
@@ -100,6 +116,9 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
             birthday_series[k].append(_safe_get_nested(report, ["comparative_analysis", "attack_normalized", "birthday", k], 0.0))
             grover_series[k].append(_safe_get_nested(report, ["comparative_analysis", "attack_normalized", "grover", k], 0.0))
             bht_series[k].append(_safe_get_nested(report, ["comparative_analysis", "attack_normalized", "bht", k], 0.0))
+
+        qiskit_available_series.append(1.0 if _safe_get_nested(report, ["quantum_execution_demo", "qiskit_available"], False) else 0.0)
+        qiskit_grover_success_series.append(_safe_get_nested(report, ["quantum_execution_demo", "grover_demo", "success_probability"], 0.0))
 
     def color_for(k: str) -> str:
         return "#d62728" if k == highlight_key else "#4c72b0"
@@ -118,6 +137,7 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
     plt.title("Attack Benchmark Throughput Trend (Highlighted: BLAKE3-KDF-SHA512)")
     plt.grid(alpha=0.3)
     plt.legend()
+    _add_better_tag("Higher is better")
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "trend_throughput.png"), dpi=300, bbox_inches="tight")
     plt.close()
@@ -132,14 +152,17 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
     axes[0].set_ylabel("Birthday (normalized)")
     axes[0].set_title("Birthday Comparative Trend")
     axes[0].grid(alpha=0.3)
+    _add_better_tag("Higher is better", axis=axes[0])
 
     axes[1].set_ylabel("Grover (normalized)")
     axes[1].set_title("Grover Comparative Trend")
     axes[1].grid(alpha=0.3)
+    _add_better_tag("Higher is better", axis=axes[1])
 
     axes[2].set_ylabel("BHT (normalized)")
     axes[2].set_title("BHT Comparative Trend")
     axes[2].grid(alpha=0.3)
+    _add_better_tag("Higher is better", axis=axes[2])
     axes[2].set_xticks(x)
     axes[2].set_xticklabels(run_labels, rotation=35, ha="right")
 
@@ -164,10 +187,12 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
     ax1.set_ylabel("Grover log2(queries)")
     ax1.set_title("Grover Resistance Trend")
     ax1.grid(alpha=0.3)
+    _add_better_tag("Higher is better", axis=ax1)
 
     ax2.set_ylabel("BHT log2(queries)")
     ax2.set_title("BHT Resistance Trend")
     ax2.grid(alpha=0.3)
+    _add_better_tag("Higher is better", axis=ax2)
 
     plt.xticks(x, run_labels, rotation=35, ha="right")
     handles, labels = ax1.get_legend_handles_labels()
@@ -194,8 +219,24 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
             tick.set_fontweight("bold")
     for bar, value in zip(bars, values_latest):
         plt.text(bar.get_x() + bar.get_width() / 2, value, f"{value:.3f}", ha="center", va="bottom")
+    _add_better_tag("Higher is better")
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "latest_comparative_scorecard.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+
+    # 5) Quantum execution demo trend
+    plt.figure(figsize=(12, 6))
+    plt.plot(x, qiskit_grover_success_series, marker="o", linewidth=2.0, color="#66c2a5", label="Grover toy success")
+    plt.step(x, qiskit_available_series, where="mid", color="#c44e52", linewidth=2.0, label="Qiskit availability (0/1)")
+    plt.xticks(x, run_labels, rotation=35, ha="right")
+    plt.ylim(-0.05, 1.05)
+    plt.ylabel("Value")
+    plt.title("Quantum Demo Trend (Qiskit Execution + Grover Toy Success)")
+    plt.grid(axis="y", alpha=0.3)
+    plt.legend()
+    _add_better_tag("Higher is better")
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, "trend_quantum_demo.png"), dpi=300, bbox_inches="tight")
     plt.close()
 
     # Save trend summary
@@ -209,6 +250,7 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
             "grover": latest_report.get("comparative_analysis", {}).get("attack_normalized", {}).get("grover", {}),
             "bht": latest_report.get("comparative_analysis", {}).get("attack_normalized", {}).get("bht", {}),
         },
+        "latest_quantum_demo": latest_report.get("quantum_execution_demo", {}),
     }
 
     with open(os.path.join(output_dir, "trend_summary.json"), "w", encoding="utf-8") as f:
@@ -227,6 +269,13 @@ def generate_trend_visuals(base_dir: str, limit: int = 15) -> str:
             g = summary["latest_attack_normalized"]["grover"].get(k, 0.0)
             h = summary["latest_attack_normalized"]["bht"].get(k, 0.0)
             f.write(f"- {titles[k]}: birthday={b:.4f}, grover={g:.4f}, bht={h:.4f}\n")
+
+        demo = summary.get("latest_quantum_demo", {})
+        if demo:
+            f.write("\nLatest quantum demo:\n")
+            f.write(f"- Backend: {demo.get('backend', 'unknown')}\n")
+            f.write(f"- Qiskit available: {demo.get('qiskit_available', False)}\n")
+            f.write(f"- Grover toy success: {demo.get('grover_demo', {}).get('success_probability', 0):.4f}\n")
 
     return output_dir
 
@@ -248,6 +297,7 @@ def main():
     print("- trend_throughput.png")
     print("- trend_attack_type_comparison.png")
     print("- trend_quantum_resistance.png")
+    print("- trend_quantum_demo.png")
     print("- latest_comparative_scorecard.png")
     print("- trend_summary.json")
     print("- trend_summary.txt")

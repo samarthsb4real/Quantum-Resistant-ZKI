@@ -1,0 +1,22 @@
+ATTACK TREND ANALYSIS SUMMARY
+============================================================
+Generated: 2026-03-17T11:42:33.233498
+Runs analyzed: 3
+Highlighted algorithm: **BLAKE3-KDF-SHA512**
+Latest run: 20260317_114225
+
+Latest attack-wise normalized metrics:
+- SHA-512: birthday=0.0000, grover=0.3275, bht=0.3275
+- BLAKE3: birthday=0.7519, grover=0.0000, bht=0.0000
+- SHA-256: birthday=0.3300, grover=0.0000, bht=0.0000
+- SHA512-BLAKE3: birthday=1.0000, grover=0.0000, bht=0.0000
+- SHA512x2-BLAKE3: birthday=0.1030, grover=0.0000, bht=0.0000
+- SHA384-XOR-BLAKE3: birthday=0.2602, grover=0.0000, bht=0.0000
+- SHA512-PAR-BLAKE3: birthday=0.2348, grover=1.0000, bht=1.0000
+- SHA512-BLAKE3-SHA512: birthday=0.3965, grover=0.9431, bht=0.9431
+- BLAKE3-KDF-SHA512: birthday=0.6910, grover=0.7666, bht=0.7666
+
+Latest quantum demo:
+- Backend: qiskit-aer
+- Qiskit available: True
+- Grover toy success: 1.0000

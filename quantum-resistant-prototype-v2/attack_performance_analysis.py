@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from indepth_analysis import RigorousTestSuite
+from quantum_attack_demo_qiskit import run_qiskit_quantum_attack_demo
 
 
 @dataclass
@@ -247,6 +248,20 @@ class AttackPerformanceAnalyzer:
     def _color(self, key: str) -> str:
         return "#d62728" if key == self.highlight_key else "#4c72b0"
 
+    @staticmethod
+    def _add_better_tag(tag: str, axis=None):
+        target_axis = axis if axis is not None else plt.gca()
+        target_axis.text(
+            0.01,
+            0.98,
+            f"Interpretation: {tag}",
+            transform=target_axis.transAxes,
+            ha="left",
+            va="top",
+            fontsize=9,
+            bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "#666666", "boxstyle": "round,pad=0.3"},
+        )
+
     def _plot_birthday(self, birthday: Dict):
         bits = birthday["parameters"]["truncation_bits"]
         keys = [p.key for p in self.algorithms]
@@ -268,6 +283,7 @@ class AttackPerformanceAnalyzer:
                     tick.set_fontweight("bold")
             axes[i].set_title(f"Birthday Attack ({bit_size}-bit truncation)")
             axes[i].grid(alpha=0.3)
+            self._add_better_tag("Higher is better", axis=axes[i])
 
         axes[0].set_ylabel("Attempts to first collision")
         axes[-1].legend()
@@ -298,6 +314,7 @@ class AttackPerformanceAnalyzer:
         plt.title("Attack-Type Comparative Performance (Highlighted: BLAKE3-KDF-SHA512)")
         plt.grid(axis="y", alpha=0.3)
         plt.legend()
+        self._add_better_tag("Higher is better")
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, "attack_type_comparison.png"), dpi=300, bbox_inches="tight")
         plt.close()
@@ -323,8 +340,45 @@ class AttackPerformanceAnalyzer:
         plt.title("Grover/BHT Comparative Model (Highlighted: BLAKE3-KDF-SHA512)")
         plt.grid(axis="y", alpha=0.3)
         plt.legend()
+        self._add_better_tag("Higher is better")
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, "quantum_attack_time_comparison.png"), dpi=300, bbox_inches="tight")
+        plt.close()
+
+    def _plot_theory_vs_execution(self, quantum: Dict, quantum_demo: Dict):
+        keys = [p.key for p in self.algorithms]
+        grover_years = {k: quantum["results"][k]["grover"]["estimated_years"] for k in keys}
+        bht_years = {k: quantum["results"][k]["bht"]["estimated_years"] for k in keys}
+
+        max_grover = max(grover_years.values()) if grover_years else 1.0
+        max_bht = max(bht_years.values()) if bht_years else 1.0
+
+        modeled_grover_norm = grover_years[self.highlight_key] / max_grover if max_grover > 0 else 0.0
+        modeled_bht_norm = bht_years[self.highlight_key] / max_bht if max_bht > 0 else 0.0
+
+        toy_success = float(quantum_demo.get("grover_demo", {}).get("success_probability", 0.0))
+        n_qubits = int(quantum_demo.get("grover_demo", {}).get("n_qubits", 1) or 1)
+        random_baseline = 1.0 / (2 ** n_qubits)
+
+        labels = [
+            "Modeled Grover\n(normalized)",
+            "Modeled BHT\n(normalized)",
+            "Qiskit Grover Toy\n(success)",
+            "Random Guess\n(baseline)",
+        ]
+        values = [modeled_grover_norm, modeled_bht_norm, toy_success, random_baseline]
+        colors = ["#66c2a5", "#fc8d62", "#4c72b0", "#8da0cb"]
+
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(labels, values, color=colors)
+        plt.ylim(0, 1.05)
+        plt.ylabel("Normalized/Probability Scale")
+        plt.title("Theory vs Execution: Quantum Attack Evidence")
+        self._add_better_tag("Higher is better")
+        for bar, value in zip(bars, values):
+            plt.text(bar.get_x() + bar.get_width() / 2, value, f"{value:.4f}", ha="center", va="bottom")
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.output_dir, "theory_vs_execution.png"), dpi=300, bbox_inches="tight")
         plt.close()
 
     def _write_text_report(self, report: Dict, path: str):
@@ -358,10 +412,23 @@ class AttackPerformanceAnalyzer:
                         f"  {bits}-bit: success={row['successes']}/{row['trials']}, avg={avg}, expected={row['expected_attempts']:.2f}\n"
                     )
 
+            f.write("\nQISKIT QUANTUM EXECUTION DEMO\n")
+            demo = report.get("quantum_execution_demo", {})
+            if demo:
+                f.write(f"  Backend: {demo.get('backend', 'unknown')}\n")
+                f.write(f"  Qiskit available: {demo.get('qiskit_available', False)}\n")
+                f.write(f"  Grover success probability: {demo.get('grover_demo', {}).get('success_probability', 0):.4f}\n")
+                f.write(f"  BHT-inspired collisions: {demo.get('bht_inspired_demo', {}).get('collision_count', 0)}\n")
+                if demo.get("limitations"):
+                    f.write(f"  Limitations: {demo['limitations']}\n")
+            else:
+                f.write("  Quantum demo unavailable.\n")
+
     def generate_full_attack_report(self, truncation_bits: List[int], trials: int, max_attempts: int) -> Dict:
         hash_rates = {p.key: self._hash_rate(p.fn) for p in self.algorithms}
         birthday = self.run_birthday_attack_analysis(truncation_bits, trials, max_attempts)
         quantum = self.run_quantum_attack_models(hash_rates)
+        quantum_demo = run_qiskit_quantum_attack_demo(self.output_dir, n_qubits=5, shots=2048)
         comparative = self.build_attack_type_comparison(birthday, quantum)
         baseline_ref = self._baseline_reference()
 
@@ -374,6 +441,7 @@ class AttackPerformanceAnalyzer:
             "hash_rate_baseline": hash_rates,
             "birthday_attack": birthday,
             "quantum_attacks": quantum,
+            "quantum_execution_demo": quantum_demo,
             "comparative_analysis": comparative,
             "indepth_reference": baseline_ref,
         }
@@ -385,6 +453,7 @@ class AttackPerformanceAnalyzer:
         self._plot_birthday(birthday)
         self._plot_attack_type_comparison(comparative)
         self._plot_quantum_models(quantum)
+        self._plot_theory_vs_execution(quantum, quantum_demo)
 
         return report
 
@@ -418,6 +487,11 @@ def main():
     print("- birthday_attack_comparison.png")
     print("- attack_type_comparison.png")
     print("- quantum_attack_time_comparison.png")
+    print("- quantum_demo_results.json")
+    print("- quantum_demo_summary.txt")
+    print("- quantum_demo_comparison.png")
+    print("- quantum_demo_bht_snapshot.png")
+    print("- theory_vs_execution.png")
 
 
 if __name__ == "__main__":

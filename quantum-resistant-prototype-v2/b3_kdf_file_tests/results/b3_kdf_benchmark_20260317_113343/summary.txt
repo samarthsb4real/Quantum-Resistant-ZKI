@@ -1,0 +1,33 @@
+ROBUST B3-KDF BENCHMARK SUMMARY
+========================================
+
+BLAKE2b-512:
+  Mean latency: 0.445436 ms
+  Mean throughput: 661.68 MB/s
+  Mean p95 latency: 0.454626 ms
+
+BLAKE3:
+  Mean latency: 0.075139 ms
+  Mean throughput: 3184.79 MB/s
+  Mean p95 latency: 0.079912 ms
+
+BLAKE3-KDF-SHA512:
+  Mean latency: 0.077410 ms
+  Mean throughput: 2977.99 MB/s
+  Mean p95 latency: 0.084482 ms
+
+SHA-512:
+  Mean latency: 0.397176 ms
+  Mean throughput: 713.72 MB/s
+  Mean p95 latency: 0.404035 ms
+
+SHA3-512:
+  Mean latency: 1.254997 ms
+  Mean throughput: 252.75 MB/s
+  Mean p95 latency: 1.282175 ms
+
+SHAKE256-512:
+  Mean latency: 0.705660 ms
+  Mean throughput: 430.38 MB/s
+  Mean p95 latency: 0.718515 ms
+

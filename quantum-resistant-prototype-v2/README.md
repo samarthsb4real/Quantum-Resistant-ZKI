@@ -3,73 +3,38 @@
 ## Core Analysis
 
 ```bash
-# Main hash function analysis
-python quantum_hash_prototype.py
-
-# NIST compliance validation
-python nist_validator.py
-
-# Comprehensive testing
-python test_suite.py
-
-# Comprehensive v2 security/performance test cases
+# Comprehensive test suite (unit + integration)
 python test_cases_v2_comprehensive.py
 
 # Attack performance analysis (Birthday, Grover, BHT)
 python attack_performance_analysis.py
 
-# Attack analysis with BLAKE3-KDF-SHA512 highlighted
-python attack_performance_analysis.py
-
 # Cross-run trend analysis for comparative benchmarking
 python attack_trend_analysis.py --limit 15
+
+# Robust BLAKE3-KDF-SHA512 benchmark (deterministic mode)
+python b3_kdf_file_tests/run_b3_kdf_file_benchmark.py --mode deterministic
+
+# Robust benchmark (randomized mode, larger scalability sweep)
+python b3_kdf_file_tests/run_b3_kdf_file_benchmark.py --mode randomized --max-size-mb 16 --stability-seconds 8
+
+# Single command full-scope end-to-end comparative test (recommended)
+python full_scope_e2e_test.py --mode fast
 ```
 
-## Interactive Tools
+## In-Depth Reference
 
 ```bash
-# Command-line interface
-python cli.py interactive
-
-# Transmission demo
-python transmission_demo.py
-```
-
-## Analysis & Reports
-
-```bash
-# Visual analysis
-python visual_analysis.py
-
-# In-depth analysis (5-10 min)
+# Regenerate indepth baseline package
 python indepth_analysis.py
-
-# Statistical comparison (3-5 min)
-python comparative_analysis.py
-
-# Complete master report (10-15 min)
-python master_report.py
 ```
 
-## CLI Commands
+## Robustness Documentation
 
-```bash
-# Hash text
-python cli.py hash -t "Hello World" -a double
+- Threat model and claim matrix: `docs/THREAT_MODEL_AND_CLAIMS.md`
+- Validity and limitation notes: `docs/LIMITATIONS_AND_VALIDITY.md`
 
-# Hash file
-python cli.py hash -f document.txt -a xor
+## CI
 
-# Compare algorithms
-python cli.py compare -t "Test message"
-
-# Algorithm info
-python cli.py info -a parallel
-```
-
-## Available Algorithms
-
-- `original` - SHA-512+BLAKE3 Sequential
-- `double` - Double SHA-512+BLAKE3 (Enhanced)
-- `xor` - SHA-384⊕BLAKE3 (Enhanced)
-- `parallel` - Parallel SHA+BLAKE3 (Enhanced)
+- Workflow: `.github/workflows/robustness.yml`
+- Installs `requirements.txt`, runs `test_cases_v2_comprehensive.py`, then runs a benchmark smoke test and uploads artifacts.

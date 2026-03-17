@@ -12,6 +12,7 @@ This suite is explicitly aligned to achievements in indepth_analysis.py:
 import json
 import math
 import os
+import subprocess
 import tempfile
 import time
 import unittest
@@ -177,6 +178,133 @@ class InDepthFollowupTests(unittest.TestCase):
                     f"current={current_mean_ms:.6f}ms baseline={base_mean_ms:.6f}ms"
                 ),
             )
+
+
+class IntegratedPipelineTests(unittest.TestCase):
+    ROOT = Path(__file__).resolve().parent
+    ATTACK_RESULTS_PREFIX = "attack_analysis_"
+    B3_RESULTS_DIR = ROOT / "b3_kdf_file_tests" / "results"
+
+    def _latest_dir(self, base: Path, prefix: str) -> Path:
+        candidates = sorted([p for p in base.iterdir() if p.is_dir() and p.name.startswith(prefix)])
+        self.assertTrue(candidates, msg=f"No directories found for prefix '{prefix}' in {base}")
+        return candidates[-1]
+
+    def test_attack_analysis_pipeline_outputs(self):
+        result = subprocess.run(
+            [
+                "python3",
+                "attack_performance_analysis.py",
+                "--birthday-bits",
+                "16,18",
+                "--trials",
+                "2",
+                "--max-attempts",
+                "15000",
+            ],
+            cwd=self.ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertIn("Attack analysis complete", result.stdout)
+
+        latest = self._latest_dir(self.ROOT, self.ATTACK_RESULTS_PREFIX)
+        expected_files = [
+            "attack_performance_report.json",
+            "attack_performance_report.txt",
+            "birthday_attack_comparison.png",
+            "attack_type_comparison.png",
+            "quantum_attack_time_comparison.png",
+            "quantum_demo_results.json",
+            "quantum_demo_summary.txt",
+            "quantum_demo_comparison.png",
+            "quantum_demo_bht_snapshot.png",
+            "theory_vs_execution.png",
+        ]
+        for name in expected_files:
+            self.assertTrue((latest / name).exists(), msg=f"Missing artifact: {name}")
+
+        report_data = json.loads((latest / "attack_performance_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(report_data.get("highlighted_algorithm"), "BLAKE3-KDF-SHA512")
+        self.assertIn("BLAKE3-KDF-SHA512", report_data.get("algorithm_names", []))
+        self.assertIn("quantum_execution_demo", report_data)
+        self.assertIn("qiskit_available", report_data["quantum_execution_demo"])
+
+    def test_b3_kdf_file_benchmark_outputs(self):
+        result = subprocess.run(
+            [
+                "python3",
+                "b3_kdf_file_tests/run_b3_kdf_file_benchmark.py",
+                "--mode",
+                "deterministic",
+                "--max-size-mb",
+                "4",
+                "--stability-seconds",
+                "3",
+            ],
+            cwd=self.ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertIn("Created test files:", result.stdout)
+        self.assertIn("Results directory:", result.stdout)
+
+        latest = self._latest_dir(self.B3_RESULTS_DIR, "b3_kdf_benchmark_")
+        expected_files = [
+            "benchmark_results.csv",
+            "benchmark_results.json",
+            "run_config.json",
+            "environment_metadata.json",
+            "manifest.json",
+            "scalability_results.json",
+            "stability_results.json",
+            "ablation_results.json",
+            "summary.txt",
+            "algo_throughput_comparison.png",
+            "algo_latency_comparison.png",
+            "b3_compute_vs_io.png",
+            "b3_scalability_throughput.png",
+            "b3_sustained_stability.png",
+            "b3_ablation_throughput.png",
+            "algo_latency_ci95.png",
+            "algo_peak_memory.png",
+            "robust_benchmark_dashboard.png",
+        ]
+        for name in expected_files:
+            self.assertTrue((latest / name).exists(), msg=f"Missing benchmark artifact: {name}")
+
+        csv_content = (latest / "benchmark_results.csv").read_text(encoding="utf-8")
+        self.assertIn("algorithm", csv_content)
+        self.assertIn("p99_ms", csv_content)
+        self.assertIn("throughput_mb_s", csv_content)
+
+    def test_full_scope_e2e_harness_outputs(self):
+        result = subprocess.run(
+            ["python3", "full_scope_e2e_test.py", "--mode", "fast"],
+            cwd=self.ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertIn("Full-scope end-to-end test completed", result.stdout)
+
+        latest = self._latest_dir(self.ROOT, "full_scope_e2e_")
+        expected = [
+            "full_scope_summary.json",
+            "full_scope_summary.txt",
+            "full_scope_comparative_dashboard.png",
+        ]
+        for filename in expected:
+            self.assertTrue((latest / filename).exists(), msg=f"Missing full-scope artifact: {filename}")
+
+        summary = json.loads((latest / "full_scope_summary.json").read_text(encoding="utf-8"))
+        self.assertTrue(summary.get("all_quality_gates_passed"), msg="Full-scope quality gates failed")
+        self.assertEqual(summary.get("highlighted_algorithm"), "BLAKE3-KDF-SHA512")
 
 
 if __name__ == "__main__":

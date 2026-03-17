@@ -1,10 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algorithm>BLAKE3-KDF-SHA512</algorithm><status>ok</status></benchmark><?xml version="1.0" encoding="UTF-8"?>
-<benchmark><algor
+<?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xml version="1.0"?><benchmark><algo>B3-KDF-S512</algo></benchmark><?xm
