@@ -1,0 +1,33 @@
+V. FORMAL SECURITY PROOF SKETCHES AND DOMAIN SEPARATION BOUNDS
+
+To critically support the structural viability of BLAKE3-KDF-SHA512, strict mathematical bounds must demonstrate that coupling the primitives inherently avoids degrading the established collision-resistant and preimage resistant properties of the constituent matrices. These semi-formal proofs validate the core thesis of cryptographic hedging.
+
+A. Theorem 1: Collision Resistance Preservation
+Hypothesis: If SHA-512 is collision-resistant, then the BLAKE3-KDF-SHA512 composite structure is implicitly universally collision-resistant. 
+
+Proof Sketch: 
+Let us postulate by contradiction that a well-resourced adversarial entity successfully derives two arbitrary, distinct input blocks $x_1 \neq x_2$ such that the final composite evaluation converges identically:
+$$ \text{BLAKE3-KDF-SHA512}(x_1) = \text{BLAKE3-KDF-SHA512}(x_2) $$
+Based on the foundational structural definition constructed in Section IV, this necessitates that:
+$$ \text{SHA-512}_{\text{out}}( \text{BLAKE3-KDF}(x_1) \parallel \text{SHA-512}(x_1) ) = \text{SHA-512}_{\text{out}}( \text{BLAKE3-KDF}(x_2) \parallel \text{SHA-512}(x_2) ) $$
+Because standard SHA-512 functionally maps as heavily collision-resistant out to practical computational bounds, the probability of formulating an external collision over the outer wrapper $\text{SHA-512}_{\text{out}}$ practically equals zero without trivially matching internal concatenations.
+Accordingly, resolving the equation mandates achieving an exact match strictly via identical concatenated state blocks:
+$$ \text{BLAKE3-KDF}(x_1) \parallel \text{SHA-512}(x_1) = \text{BLAKE3-KDF}(x_2) \parallel \text{SHA-512}(x_2) $$
+By the very structural constraints of non-overlapping byte block alignment mappings, resolving the concatenation exactly implies resolving both internal elements independently:
+$$ \text{BLAKE3-KDF}(x_1) = \text{BLAKE3-KDF}(x_2) \quad \land \quad \text{SHA-512}(x_1) = \text{SHA-512}(x_2) $$
+However, the localized mapping $\text{SHA-512}(x_1) = \text{SHA-512}(x_2)$ while $x_1 \neq x_2$ explicitly demands producing a native mathematical collision mapping against standalone SHA-512. Doing so completely violates our initial hypothesis stating that SHA-512 intrinsically operates functionally as collision-resistant. By mapping this direct mathematical contradiction, we conclude robustly that generating a valid BLAKE3-KDF-SHA512 collision necessitates structurally cracking the inner SHA-512 primitive baseline directly. 
+
+B. Theorem 2: Preimage Resistance and Quantum Search Extinguishment
+To isolate arbitrary preimages from the structure given a bounded output evaluation string $Y = \text{BLAKE3-KDF-SHA512}(X)$, the cryptanalytic threat vector necessitates unraveling layers individually. 
+Initially, the operative attack sequences require forcing a strict preimage matching array $B_{out} \parallel S_{out}$ directly out of the outer 512-bit constraint function such that $\text{SHA-512}(B_{out} \parallel S_{out}) = Y$.
+Subsequently, achieving the finalized targeted source integer input $X$ practically requires discovering independent mapping sets resolving identically such that:
+$B_{out} = \text{BLAKE3-KDF}(X, ctx)$ or $S_{out} = \text{SHA-512}(X)$.
+Reversing the structural entropy dictates completely isolating independent operational preimages natively out of both established cryptographic structures. The computational complexities strictly mirror the maximum bound represented natively by the most difficult singular constituent primitive inside the encapsulation sequence. Quantumly, the minimum search boundary adheres dynamically to Grover's generalized bounds dictating maximum bounds $O(2^{256})$.
+
+C. Theorem 3: The Hedging Guarantee Against Structural Degradation
+The ultimate objective of cryptographic hedging rests heavily upon ensuring total defensive operational stability if internal configurations encounter mathematical disintegration. 
+
+Consider the hypothetical, catastrophic environment where global cryptanalysts publish an absolute linear mathematical breakdown explicitly exploiting profound vulnerabilities isolated inherently mapped inside the optimized bounds of BLAKE3's underlying ChaCha array permutation matrices. In this dire scenario, structural properties mapping to standard BLAKE3 completely disintegrate.
+
+Assuming the generalized bounds of FIPS 180-4 SHA-512 computations remain structurally insulated against cross-pollinating cryptanalytic threats, the core formulation $\text{SHA-512}( \text{Broken-BLAKE3-KDF}(X) \parallel \text{SHA-512}(X) )$ defaults seamlessly back exactly to evaluating essentially noisy arbitrary padded strings concatenated directly ahead of legitimate operational SHA-512 cryptographic digests. 
+Provided the padded lengths strictly limit the vulnerability windows preventing standard generic length-extension derivations, the overall system functions exactly analogous to standalone operational SHA-512 hashing evaluations, cleanly avoiding catastrophic systemic operational collapse.

@@ -1,0 +1,28 @@
+III. QUANTUM THREAT MODELS AND SECURITY BOUNDS
+
+The necessity of extending hash boundaries natively roots itself in the mechanics of quantum search dynamics. Evaluating the defensive posture of cryptographic hash combiners requires rigorously quantifying their quantum query complexities against well-accepted adversarial models. 
+
+A. Preimage Resistance and Grover's Search Algorithm
+Preimage resistance (or one-wayness) dictates the cryptanalytic difficulty of deriving a source integer input $x$ given a hash digest $H(x) = y$. In classical compute paradigms, for an $n$-bit hash function modeled as a uniformly random oracle, a brute-force search algorithm requires bounded $O(2^n)$ queries to discover an input mapping to the target element with high probability. 
+
+Grover's algorithm functions as a quantum mechanical amplitude amplification protocol. Given a quantum oracle representing the hash function evaluation mapping, the algorithm initializes a uniform superposition of all possible $2^n$ basis states. Over roughly $\frac{\pi}{4} \sqrt{2^n}$ iterations, the algorithm systematically amplifies the probability amplitude of the specific computational basis state $|x\rangle$ that satisfies $H(x) = y$. 
+Consequently, the post-quantum asymptotic security margin collapses drastically:
+$$ \mathcal{T}_{Grover} \approx O(2^{n/2}) $$ 
+For SHA-256 or standalone BLAKE3, the quantum preimage search domain falls to a 128-bit complexity threshold. While 128 bits denotes the baseline requirement for minimal theoretical modern security (NIST Level 1 equivalence), highly conservative architectures (military, diplomatic, large-scale financial ledgers) demand significantly wider safety margins approaching 256 bits of bounded security.
+
+B. Collision Search and The Brassard-Høyer-Tapp (BHT) Algorithm
+A more profound degradation strikes the bounds of collision resistance—the difficulty of isolating any two inputs $x_1 \neq x_2$ such that $H(x_1) = H(x_2)$. Classically, the bounds of general collision discovery adhere to the generalized Birthday Paradox, bounding the threshold at approximately $O(2^{n/2})$ queries before collisions map over an arbitrary state space. 
+
+Quantumly, a targeted synthesis of Grover’s algorithm structured alongside classical localized birthday techniques spawns the Brassard-Høyer-Tapp (BHT) algorithm. The implementation necessitates an attacker leveraging sufficient quantum RAM (QRAM) to classically map out intermediate collision pairs against a structured quantum search matrix. Due to its optimized structure, BHT reduces the complexity matrix to the fractional cube root:
+$$ \mathcal{T}_{BHT} \approx O(2^{n/3}) $$
+For a 256-bit output structure space, bounded algorithmic iterations translate directly to an abysmal $O(2^{85.3})$ theoretical query scope. An 85.3-bit security bound implies catastrophic inadequacy against the long-term operational lifespan of current secure systems against motivated nation-state actors holding quantum compute clusters.
+
+C. Synthesizing Protection Thresholds
+To defend against both Grover and BHT vectors comprehensively, the combinatorial framework requires raising $n$ to $512$ bits minimum. 
+For 512-bit native mapping:
+1) **Grover Preimage Security:** $O(2^{512/2}) = 256$ bits of quantum security.
+2) **BHT Collision Security:** $O(2^{512/3}) = 170.6$ bits of quantum security.
+
+This perfectly corresponds with the requirements formulated by the NIST Post-Quantum Specification targeting 'Level 5' robustness—ensuring the output mapping functionally equals or radically supersedes the quantum structural search constraints placed on AES-256 key block search domains. 
+
+The rationale for not merely defaulting functionally to native SHA-512 relies upon algorithmic volatility assumptions. By integrating BLAKE3 via a KDF boundary structure inside the 512-bit expansion field, the formulation achieves NIST Level 5 parameters under quantum paradigms, while systematically defusing the catastrophic failure metrics associated with the potential cryptanalytic cracking of any singular algorithm's internal bit shifting logic.
