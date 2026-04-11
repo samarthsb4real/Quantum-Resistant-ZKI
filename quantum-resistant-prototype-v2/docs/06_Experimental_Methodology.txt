@@ -1,47 +1,106 @@
 VI. EXPERIMENTAL METHODOLOGY
 
-To thoroughly investigate the security bounds, computational constraints, and cryptanalytic properties of the proposed BLAKE3-KDF-SHA512 structure, we designed and implemented a comprehensive evaluation matrix composed of sophisticated cryptographic stress diagnostics juxtaposed linearly against high-resolution computational latency frameworks. 
+To validate the cryptographic soundness, data integrity reliability, and practical performance of the BLAKE3-KDF-SHA512 framework, we designed a rigorous experimental pipeline comprising 15 discrete tests organized into six evaluation groups. All tests are executed across 8 hash algorithms — 4 standalone baselines and 4 combiner constructions — enabling comprehensive comparative analysis.
 
-A. Algorithm Selection and Scope Formulation
-The testing framework evaluates eight distinct hash functional structures classified broadly into two defined categories: singular baseline hash architectures and composite algorithmic multi-primitive formulations (combiners).
+A. Algorithms Under Test
+The evaluation covers the full spectrum of integrity hash configurations:
 
-Standalone Baselines:
-1. SHA-256 (256-bit output, Baseline cryptographic minimum standard)
-2. SHA-512 (512-bit output, Operational high-security benchmark)
-3. SHA3-512 (512-bit output, Keccak-f permutation sponge framework benchmark)
-4. BLAKE3 (256-bit output, Parallel tree-structure high-throughput operational baseline)
+Table 1: Algorithms Evaluated
+   #   Algorithm           Type          Output    Architecture
+   1   SHA-256             Baseline      256-bit   Merkle-Damgård (FIPS 180-4)
+   2   SHA-512             Baseline      512-bit   Merkle-Damgård (FIPS 180-4)
+   3   SHA3-512            Baseline      512-bit   Keccak sponge (FIPS 202)
+   4   BLAKE3              Baseline      256-bit   Merkle tree + ChaCha permutation
+   5   Cascade             Combiner      512-bit   SHA-512(BLAKE3(x))
+   6   XOR                 Combiner      512-bit   BLAKE3-512(x) ⊕ SHA-512(x)
+   7   Concat-Hash         Combiner      512-bit   SHA-512(SHA-512(x) ∥ BLAKE3(x))
+   8   BLAKE3-KDF-SHA512   Framework     512-bit   SHA-512(BLAKE3-KDF(x,ctx) ∥ SHA-512(x))
 
-Combiner Constructions:
-5. Cascade: $ \text{SHA-512}( \text{BLAKE3}(x) ) $ (Sequential operational constraints)
-6. XOR Combiner: $ \text{BLAKE3-512}(x) \oplus \text{SHA-512}(x) $ (Fully parallel boundary execution paths)
-7. Concat-Hash: $ \text{SHA-512}( \text{SHA-512}(x) \parallel \text{BLAKE3}(x) ) $ (Classical operational hash hedging format)
-8. BLAKE3-KDF-SHA512: $ \text{SHA-512}( \text{BLAKE3-KDF}(x, ctx) \parallel \text{SHA-512}(x) ) $ (The proposed optimal hedging structure utilizing distinct derived IV parameter space mappings)
+Algorithms 1–4 serve as baselines representing the current state of practice. Algorithms 5–7 represent alternative combiner strategies from the literature. Algorithm 8 is the proposed framework.
 
-B. The Cryptographic Evaluation Suite (13 Rigorous Stress Diagnostics)
-We enforce deep statistical validation through a custom operational suite executing an extensive 13 distinct mathematical and logical evaluation benchmarks targeting various security components comprehensively. 
+B. Cryptographic Validation Suite (15 Tests)
 
-Group 1: Diffusion and Nonlinear State Transition Properties
-1) Avalanche Effect Analysis: Tests single-bit input volatility dynamics over normalized sequences calculating resultant cascading fractional bit modifications across exactly 5,000 randomized output payloads.
-2) Strict Avalanche Criterion (SAC) Modeling: Calculates positional deviations rigorously across 32 individual source-bit isolation windows, heavily penalizing deviations over exactly 2,000 distinct operational tests mapping directly against the ideal distribution curve (0.50). 
+Group 1: Diffusion and Tamper Sensitivity
+These tests validate the fundamental property required for tamper detection: that any input modification propagates to a large, unpredictable change in the output.
 
-Group 2: Distribution Uniformity and Unstructured Mathematical Randomness
-3) Chi-Square Uniformity Test: Performs statistical Goodness-of-Fit boundary mapping evaluating exactly 50,000 independent output sequence distributions targeting perfectly identical uniform ranges spanning 0 to 255.
-4) Shannon Entropy Computations: Assesses inherent sequential byte information densities theoretically modeling the data structures mathematically targeting precisely 8.0 bits-per-byte maximum operational ceilings.
-5) Absolute Determinism Validity Check: Validates algorithmic stability ensuring flawlessly identical operational mappings unconditionally map explicitly back directly to synchronized deterministic functional boundaries.
+Test 1 — Avalanche Effect Analysis:
+   For each of 5,000 random 64-byte inputs, a single random bit is flipped. The fraction of output bits that change is recorded. The ideal mean is exactly 0.5 (50% of output bits flip). Deviations from 0.5 indicate weak diffusion that could allow tampered data to produce similar integrity tags.
 
-Group 3: Entropy Collision Metrics and Structural Redundancy Models
-6) General Collision Search Arrays: Massively iterates specifically across 100,000 highly unique structured string blocks definitively seeking operational redundancy maps intersecting classical hash mapping vulnerabilities.
-7) Empirical Validated Birthday Paradox Simulations: Simulates deeply restricted hash collisions deliberately enforcing artificial truncation truncating outputs logically towards 16-bit, 20-bit, and 24-bit operational sequences. Measures actual statistical collision variables comparing empirical data structures linearly alongside theoretical computational expectations bounded via $ \sqrt{\pi/2 \cdot 2^n} $ boundary mathematics. 
-8) Near-Collision Hamming Distance Metrics: Tracks overall statistical variances mapping the differential Hamming fractional displacement gaps evaluated comprehensively alongside random paired distribution mappings representing $10,000$ internal iterations bounding operational sequence isolation dynamics.
+Test 2 — Strict Avalanche Criterion (SAC):
+   For each of 32 specific input-bit positions (evenly spaced across the 512-bit input), 2,000 random inputs are tested with that specific bit flipped. SAC compliance requires every input-bit position to independently produce ≈0.5 avalanche ratio. A maximum positional deviation below 0.03 indicates SAC compliance.
 
-Group 4: Structural Systemic Hardening Integrity Modules
-9) Domain Separation Correlation Verification: Analyzes statistical independence explicitly utilizing formalized Pearson correlation mechanics actively evaluating 5,000 standardized native BLAKE3 blocks directly matched against their identically parameterized BLAKE3-KDF sequences deriving specific structural separation margins.
-10) Multi-Bit Sensitivity (Stress Test) Volatility Boundaries: Identifies anomalous structural decays deliberately stressing sequential parameters executing arbitrary mathematical flip limits pushing limits evaluating $k \in \{1, 2, 4, 8, 16, 32\}$ boundaries continuously scaling across output avalanche testing.
-11) Target Input-Length Operational Consistency Tracking: Proves absolute scale stability guaranteeing avalanche bounds identically maintain fractional integrity independently mapping from minute 16 B source vectors straight up functionally to extensive 4096 B payloads.
-12) Advanced Bit-Independence Constraints Mapping: Proves explicit sequence non-correlation by plotting precisely 32 distinctly isolated payload bits monitoring specific sequential bias structures and generalized localized pairwise boundary correlation dependencies modeled precisely across 10,000 sequential execution vectors. 
+Group 2: Output Distribution Quality
+These tests verify that integrity tags are statistically indistinguishable from random bit strings, preventing pattern-based forgery.
 
-Group 5: Post-Quantum Resilience Modeling Mathematics
-13) Quantum Structural Matrix Projections: Formally outlines theoretical threshold bounding parameters explicitly charting complex variables mirroring asymptotic boundaries represented logically alongside mathematically robust Grover algorithms generating preimages and generalized BHT collision-mapping derivations explicitly calculating total systemic security resilience configurations aligned with generalized NIST quantum evaluations parameters.
+Test 3 — Chi-Square Byte Distribution:
+   50,000 integrity tags are computed and concatenated. The byte-value frequency distribution (256 bins) is tested against the uniform distribution using the chi-square goodness-of-fit test. The test passes if χ² < 293.25 (α = 0.05, df = 255).
 
-C. Empirical Computational Platform Implementation
-Latency bounds utilize advanced Python-native C-struct bindings benchmarking configurations across isolated 64 Byte, 1 KB, 64 KB, 1 MB, and 16 MB sequences generating explicit $95\%$ statistical bootstrap constraints dynamically recalculating performance outputs directly scaling natively towards 50,000 independent operational iterations enforcing systemic measurement parity exactly mapped universally to identically parallel execution blocks.
+Test 4 — Shannon Entropy:
+   The Shannon entropy H = -Σ p(x) log₂ p(x) is computed over the byte distribution. The theoretical maximum for a 256-value alphabet is 8.0 bits per byte. Entropy ratios above 0.999 indicate near-perfect randomness.
+
+Test 5 — Determinism:
+   1,000 random inputs are each hashed twice. All outputs must match exactly. Non-determinism would be a fatal flaw for integrity verification (the same data would produce different tags on different verifications).
+
+Group 3: Collision Resistance Metrics
+These tests measure the framework's resistance to integrity tag collisions — the event where two different data blocks produce the same tag.
+
+Test 6 — Full-Length Collision Search:
+   100,000 unique random inputs are hashed, and the full-length digests are checked for any duplicates. For a 512-bit hash, the probability of a collision in 10^5 samples is approximately 10^{-144} — effectively zero. Any collision detected would indicate a catastrophic weakness.
+
+Test 7 — Birthday Attack Validation:
+   Truncated hash outputs (16, 20, and 24 bits) are tested empirically to validate that collision rates match the theoretical birthday bound: √(π/2 · 2^n). Each truncation level is tested across 10 trials. The ratio of empirical to theoretical collision counts should be close to 1.0 for a well-behaved hash function.
+
+Test 8 — Near-Collision Hamming Distance:
+   5,000 hashes are generated, and 10,000 random pairs are compared by Hamming distance (number of differing bits). For a 512-bit hash, the expected mean Hamming distance is 256 bits with a binomial standard deviation of approximately 11.3 bits. Clustering below n/4 would indicate near-collision vulnerabilities.
+
+Group 4: Structural Integrity and Independence
+These tests probe deeper structural properties to ensure the integrity construction has no hidden weaknesses.
+
+Test 9 — Domain Separation Verification:
+   5,000 random inputs are hashed using both BLAKE3 standard hash mode and BLAKE3 KDF mode. The Hamming distance ratio between the two outputs is measured (expected: 0.5), and the Pearson correlation between byte-level statistics is computed (expected: ≈0). This test validates that the two BLAKE3 modes inside our framework operate as genuinely independent primitives.
+
+Test 10 — Multi-Bit Sensitivity Stress Test:
+   Instead of flipping a single input bit, this test flips k = {1, 2, 4, 8, 16, 32} bits simultaneously in 2,000 random inputs. A robust integrity hash must maintain ≈0.5 avalanche ratio regardless of the number of corrupted bits. Degradation under multi-bit corruption would indicate structural weakness exploitable by adversaries corrupting multiple bytes.
+
+Test 11 — Input-Length Consistency:
+   Avalanche quality is measured across input lengths ranging from 16 bytes to 4,096 bytes (8 length values, 2,000 samples each). The integrity hash must perform equally well on short messages (individual records) and long messages (file blocks). Inconsistency would indicate exploitable length-dependent weaknesses.
+
+Test 12 — Bit-Independence Analysis:
+   32 evenly spaced output-bit positions are monitored across 10,000 random inputs. Each bit must have P(bit=1) ≈ 0.5 (unbiased), and adjacent bit pairs must have Pearson correlation |ρ| < 0.05 (uncorrelated). Biased or correlated output bits reduce the effective entropy of integrity tags.
+
+Group 5: Quantum Security Modelling
+Test 13 — Quantum Attack Complexity:
+   For each algorithm, the theoretical Grover preimage and BHT collision query complexities are computed from the digest size. This produces a comparative security table showing which algorithms meet NIST Post-Quantum Level 5 (256-bit quantum security) and which fall short.
+
+Group 6: Data Integrity Verification
+These tests directly validate the framework's core purpose — reliable data integrity.
+
+Test 14 — Tamper Detection Rate:
+   For each algorithm, 5,000 random data blocks are generated and their integrity tags computed. Each block is then corrupted using four strategies:
+   (a) Single-bit flip — the smallest possible modification
+   (b) Multi-bit flip (4 random bits) — simulating subtle corruption
+   (c) Byte substitution — replacing one byte with a different value
+   (d) Byte insertion — inserting a random byte (changing data length)
+   The tampered data is re-hashed, and the test measures whether the integrity tag changes. A perfect integrity function detects 100% of all corruption types.
+
+Test 15 — Integrity Verification Consistency:
+   The framework's determinism is validated across diverse data formats: empty data, single bytes (all 256 values), ASCII text strings, random binary data, repeated byte patterns, and structured JSON records. For each format, the hash is computed twice and compared. All 2,000+ tests must pass with a 100% consistency rate.
+
+C. Performance Benchmarking
+Performance metrics are measured using high-resolution timers (time.perf_counter) with the following protocol:
+
+   Input Sizes: 64 B, 1 KB, 64 KB, 1 MB, 16 MB
+   Iterations: 50,000 (64B) → 20 (16MB), scaling with payload size
+   Warmup: 10–100 iterations before timing begins
+   Metrics: Mean latency (μs), median, P95, P99, standard deviation
+   Confidence Intervals: 95% bootstrap CIs with 1,000 resamples
+   Throughput: Computed as input_size / mean_latency in MB/s
+
+Additionally, the integrity verification throughput is measured — the complete hash-then-verify cycle time, representing the actual cost of data integrity checking in a deployed system.
+
+D. Computing Environment
+All experiments are executed in a controlled Python 3.11+ environment using:
+   - hashlib (backed by OpenSSL's optimized C implementations for SHA-256, SHA-512, SHA3-512)
+   - blake3 (Python bindings to the official Rust implementation with AVX-2/AVX-512 auto-detection)
+   - Statistical analysis entirely in Python standard library (no NumPy dependency in analysis code)
+   - Plotting via Matplotlib 3.7+ with NumPy for array operations

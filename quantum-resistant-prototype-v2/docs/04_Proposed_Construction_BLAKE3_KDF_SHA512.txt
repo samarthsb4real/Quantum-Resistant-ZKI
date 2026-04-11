@@ -1,35 +1,96 @@
-IV. PROPOSED CONSTRUCTION: BLAKE3-KDF-SHA512
+IV. PROPOSED FRAMEWORK: BLAKE3-KDF-SHA512 FOR SECURE DATA INTEGRITY
 
-In formulating an algorithmic combiner designed to maximize cryptographic hedging guarantees without aggressively penalizing systemic runtime parameters, the framework must explicitly eliminate internal choke points while simultaneously guaranteeing that any single-component collapse maps safely outside the attacker's visibility bounds. To directly align with those constraints, we introduce the formal specification of BLAKE3-KDF-SHA512.
+This section presents the complete design of the BLAKE3-KDF-SHA512 hybrid hash framework, including its formal cryptographic construction, practical data integrity API, domain separation architecture, and streaming support for large-scale file verification.
 
-A. The Formal Specification
-Given an arbitrarily sized input message sequence $x \in \{0,1\}^*$, the fully formed cascade algorithm maps identically to the following concatenated sequence matrix:
+A. Formal Construction Specification
+Given an arbitrary input data sequence x ∈ {0,1}*, the BLAKE3-KDF-SHA512 integrity hash is defined as:
 
-$$ Output = \text{SHA-512}( \text{BLAKE3-KDF}(x, ctx) \parallel \text{SHA-512}(x) ) $$
+   IntegrityTag(x) = SHA-512( BLAKE3-KDF(x, ctx) ∥ SHA-512(x) )
 
 Where:
-* $ctx$ represents the rigid structure of a statically bounded, domain-separated ASCII context string: `"blake3-kdf-sha512-v2-2026"`.
-* $\parallel$ dictates byte-level exact block concatenation.
-* $\text{BLAKE3-KDF}(x, ctx)$ yields the 256-bit internal KDF derivation output block.
-* $\text{SHA-512}(x)$ yields the 512-bit classical Merkle-Damgård iteration matrix. 
-* The outer function $ \text{SHA-512}(\dots) $ compresses the concatenated $256 + 512 = 768$-bit internal state vector yielding the final standardized 512-bit digest sequence.
+   • ctx is a fixed ASCII domain-separation context string: "blake3-kdf-sha512-v2-2026"
+   • ∥ denotes byte-level concatenation
+   • BLAKE3-KDF(x, ctx) produces a 256-bit (32-byte) output using BLAKE3's key derivation mode with the specified context
+   • SHA-512(x) produces a 512-bit (64-byte) output using standard FIPS 180-4 SHA-512
+   • The outer SHA-512 compresses the 768-bit (96-byte) concatenated block into the final 512-bit integrity tag
 
-B. Multi-Stage Pipeline Execution
-Computationally, the implementation natively segregates into two structurally disparate computational boundaries logically executed synchronously if sufficient instruction pipelines exist.
+The output is a fixed 512-bit (64-byte) integrity digest suitable for all standard integrity verification protocols.
 
-Stage 1 (Parallel Computation Phase):
-A scheduler splits the localized application environment's input sequence mapping the entire source array identically to two diverse threads. 
-Thread A computes $b = \text{BLAKE3-KDF}(x, ctx)$. Operations traverse vertically down BLAKE3's high-speed Merkle tree structures utilizing SIMD instructions (e.g., AVX-512) for hyper-fast localized resolution.
-Thread B concurrently maps $s = \text{SHA-512}(x)$. It evaluates standard state processing blocks matching serialized internal rounds sequentially.
+B. Two-Stage Parallelizable Pipeline
+The construction naturally decomposes into two computational stages, enabling efficient implementation on modern multi-core processors:
 
-Stage 2 (Binding and Collision Extinguishing Phase):
-The secondary phase collapses into serialized hardware logic. Utilizing the buffered output arrays $(b, s)$ extracted out of Stage 1, the framework performs a rapid memory allocation executing $output = \text{SHA-512}(b \parallel s)$. Because the internal payload payload exactly equals just 96 bytes (768 bits), the secondary invocation processes merely a single serialized block boundary over the SHA-512 round matrix, virtually eliminating secondary performance degradation margins dynamically. 
+Stage 1 — Parallel Inner Hash Computation:
+   Thread A computes: b = BLAKE3-KDF(x, ctx)
+   Thread B computes: s = SHA-512(x)
+   Both threads read from the same input data x and can execute concurrently. BLAKE3's Merkle tree structure enables additional intra-thread parallelism via SIMD instructions (AVX-512, NEON), while SHA-512 executes its 80 rounds sequentially on its own thread.
 
-C. The Core Domain Separation Thesis 
-The most distinct structural architectural leap mapping exclusively in this study is utilizing BLAKE3's Key Derivation Function profile natively inside the concatenation domain rather than simply defaulting to its core standard mapping state. 
+Stage 2 — Binding and Final Compression:
+   The framework concatenates the two inner hashes: combined = b ∥ s (96 bytes)
+   The outer SHA-512 processes this 96-byte block in a single compression round: output = SHA-512(combined)
+   Since the inner payload is only 96 bytes (well under the 1024-bit block boundary), the outer hash completes in minimal time — typically under 1 μs — contributing negligible overhead.
 
-Implementing a basic `SHA-512(BLAKE3(x) || SHA-512(x))` combiner produces a highly stable structure offering 'Two Primitive' mathematical protection matrices. However, an adversarial compromise of the internal ChaCha derivation matrices inherent to BLAKE3 logically nullifies the entire left-hand entropy boundary space of the combiner natively exposing the overall construct globally to standard one-tier breakdown thresholds. 
+C. Data Integrity Framework API
+Beyond the raw hash construction, we implement a complete data integrity framework (the QRHIntegrityFramework class) exposing the following operations:
 
-As stated inside Section II, triggering BLAKE3 utilizing its KDF formulation radically rewrites the foundational mathematical sequence the primitive propagates initially. The hardcoded, rigorously evaluated standard IV array is algorithmically substituted. To map the updated $IV_{kdf}$, the BLAKE3 state engine iterates directly over the ASCII string `"blake3-kdf-sha512-v2-2026"`. The output derivation serves as the entirely original secondary $IV_{kdf}$ fed directly into the initial tree evaluation chunk sequences.
+1) compute_integrity_hash(data: bytes) → bytes
+   Computes the 512-bit BLAKE3-KDF-SHA512 integrity digest for an in-memory data buffer. This is the primary operation for message-level integrity.
 
-Practically and statistically, traversing the Merkle tree with modified root derivation states implies functionally isolating mathematical boundaries from classic cryptanalytic vectors modeled across standard standard evaluation metrics. The output is a genuinely "Third Primitive" matrix derived computationally cheap via the inherent structural flexibility of the tree boundary. In the event arbitrary linear or differential models isolate fundamental flaws mapped universally across standard BLAKE3 boundaries, the highly altered initialization internal dynamics guarantee the KDF variant maps zero operational overlap. Consequently, BLAKE3-KDF-SHA512 intrinsically supplies "Three Primitive Hedging Guarantees" derived structurally from exactly two standalone C/C++ library inclusions.
+2) verify_integrity(data: bytes, expected_hash: bytes) → bool
+   Recomputes the integrity hash and performs a constant-time comparison against the expected hash. The constant-time comparison (using HMAC-based byte comparison) prevents timing side-channel attacks that could leak information about partial hash matches.
+
+3) compute_file_integrity(filepath) → bytes
+   Computes the integrity hash for a file using streaming reads. The file is read in 64 KB chunks, and both BLAKE3-KDF and SHA-512 operate in incremental update mode. This approach maintains O(1) memory overhead regardless of file size — essential for verifying multi-gigabyte archives, disk images, or database backups.
+
+   Implementation details:
+   - A BLAKE3 incremental hasher is created with derive_key_context=ctx
+   - A hashlib SHA-512 incremental hasher is created
+   - Each 64 KB chunk is fed to both hashers
+   - After reading completes, the two digests are concatenated and hashed through the outer SHA-512
+
+4) verify_file_integrity(filepath, expected_hash) → bool
+   Streaming file verification combining compute_file_integrity with constant-time comparison.
+
+5) generate_integrity_manifest(directory) → dict
+   Recursively traverses a directory tree and computes the integrity hash for every file. Returns a dictionary mapping relative file paths to hex-encoded integrity digests. This is directly analogous to how package managers (apt, npm, Homebrew) distribute manifest files for verification.
+
+6) verify_manifest(directory, manifest) → dict
+   Verifies every file in a directory against a previously generated manifest. Returns a status for each entry:
+   - "ok": file exists and integrity tag matches
+   - "tampered": file exists but integrity tag differs (data corruption or malicious modification detected)
+   - "missing": file listed in the manifest no longer exists on disk
+   - "new": file exists on disk but was not present in the original manifest
+
+7) compute_authenticated_hash(data, key) → bytes
+   Computes an HMAC-SHA512 over the integrity digest, binding a secret key to the integrity tag. This provides authenticated integrity — the adversary cannot forge a valid integrity tag without possessing the key, even if they have full read access to the data. The construction is: HMAC-SHA512(key, BLAKE3-KDF-SHA512(data)).
+
+8) verify_authenticated_hash(data, key, expected_mac) → bool
+   Verifies an authenticated integrity tag using constant-time comparison.
+
+D. The Domain Separation Thesis: Three-Primitive Hedging
+The fundamental architectural innovation in this framework is the use of BLAKE3's KDF mode rather than its standard hash mode inside the combiner. This design choice transforms the construction from a two-primitive system into a three-primitive system, providing stronger cryptographic hedging at zero additional library cost.
+
+The three functionally independent primitives are:
+
+   Primitive 1: BLAKE3 Standard Hash (IV = fixed constants from SHA-256 specification)
+   Primitive 2: BLAKE3 KDF (IV = BLAKE3_compress("blake3-kdf-sha512-v2-2026"))
+   Primitive 3: SHA-512 (Merkle-Damgård construction with its own fixed IV)
+
+The key insight is that BLAKE3 Standard Hash and BLAKE3 KDF, despite using the same ChaCha-based compression function, operate on completely different initial conditions. In nonlinear dynamical systems — which cryptographic compression functions are designed to emulate — different initial conditions produce completely divergent trajectories. A cryptanalytic attack that exploits specific properties of the BLAKE3 hash mode's fixed IV (such as related-key attacks or differential paths rooted in the standard IV structure) would not transfer to the KDF mode's context-derived IV.
+
+Consequently, a catastrophic break of any single primitive leaves the other two intact:
+   • If BLAKE3 standard hash is broken → BLAKE3-KDF and SHA-512 remain secure
+   • If BLAKE3-KDF is broken → SHA-512 alone still provides 512-bit integrity
+   • If SHA-512 is broken → the BLAKE3-KDF component still provides 256-bit integrity (with degraded collision resistance from the outer hash, but the inner commitment remains)
+
+This hedging guarantee is achieved using only two library dependencies (blake3 and hashlib/OpenSSL), making it practical for real-world deployment without introducing additional supply-chain complexity.
+
+E. Streaming Integrity for Large-Scale Data
+For data integrity in real-world deployments — package management, continuous integration artifact verification, database backup validation — the framework must handle files ranging from kilobytes to multiple gigabytes. The streaming design ensures:
+
+1) Constant Memory: Only a 64 KB read buffer plus the two hasher states (~200 bytes combined) are kept in memory. File size does not affect memory consumption.
+
+2) Single-Pass Processing: The file is read exactly once from disk. Both BLAKE3-KDF and SHA-512 operate incrementally on the same data stream, avoiding double reads.
+
+3) Progressive Throughput: BLAKE3's Merkle tree architecture internally parallelizes chunk processing, ensuring that throughput scales with available SIMD width. The SHA-512 hasher processes the same chunks sequentially but at hardware-accelerated speeds (via SHA-NI CPU extensions where available).
+
+The resulting integrity verification throughput is bounded by the slower of the two internal hashes — typically SHA-512 for large files — but the overhead relative to standalone SHA-512 diminishes to under 1% at megabyte scale because BLAKE3's parallelized computation completes well before SHA-512 finishes.

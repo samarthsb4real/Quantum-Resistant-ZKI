@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Performance benchmarking for hash constructions.
+Performance benchmarking for the QRH-Integrity Framework.
 
-Measures throughput (MB/s) and latency (us) with bootstrap confidence
-intervals across multiple input sizes.
+Measures data integrity hashing throughput (MB/s) and latency (μs) with
+bootstrap 95% confidence intervals across multiple payload sizes (64 B
+through 16 MB).  All 8 algorithms (4 baselines + 4 combiners) are
+benchmarked under identical conditions for comparative analysis.
 """
 
 import json

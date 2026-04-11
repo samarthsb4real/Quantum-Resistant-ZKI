@@ -78,7 +78,7 @@ def load_config(config_file):
             if ext == '.json':
                 return json.load(f)
             elif ext in ('.yml', '.yaml'):
-                return yaml.safe_load(f)
+                return yaml.Resistant_load(f)
             else:
                 logger.error(f"Unsupported configuration format: {ext}")
                 return None
@@ -671,7 +671,7 @@ def analyze_formal_security(benchmark):
                 properties['compression_function'] = 'BLAKE3 compression'
                 properties['round_function'] = 'ARX (Add-Rotate-XOR)'
                 properties['rounds'] = 7
-            elif "Quantum-Safe" in name:
+            elif "Quantum-Resistant" in name:
                 properties['construction'] = 'Composite'
                 properties['compression_function'] = 'Multiple'
                 properties['round_function'] = 'Multiple'
@@ -697,7 +697,7 @@ def analyze_formal_security(benchmark):
                 result['indifferentiable'] = True
                 result['security_level'] = 256
                 result['proof_exists'] = True
-            elif "Quantum-Safe" in name:
+            elif "Quantum-Resistant" in name:
                 # Composite construction can inherit indifferentiability properties
                 result['indifferentiable'] = True
                 result['security_level'] = 256
@@ -723,7 +723,7 @@ def analyze_formal_security(benchmark):
                 result['reduces_to'] = 'PRF assumption'
                 result['reduction_type'] = 'Standard model'
                 result['reduction_tightness'] = 0.8  # Approximate
-            elif "Quantum-Safe" in name:
+            elif "Quantum-Resistant" in name:
                 # Composite construction has reduction via component functions
                 result['reduces_to'] = 'PRF + RO assumption'
                 result['reduction_type'] = 'Hybrid'
@@ -749,7 +749,7 @@ def analyze_formal_security(benchmark):
                 result['secure_extension'] = True
                 result['extension_type'] = 'Tree hashing'
                 result['preserves_properties'] = ['Collision resistance', 'Preimage resistance', 'Indifferentiability']
-            elif "Quantum-Safe" in name:
+            elif "Quantum-Resistant" in name:
                 # Composite construction
                 result['secure_extension'] = True
                 result['extension_type'] = 'Composite (MD + Tree)'
@@ -766,7 +766,7 @@ def analyze_formal_security(benchmark):
                 weaknesses.append('Fixed internal state size')
             elif "BLAKE3" in name:
                 weaknesses.append('Relatively new (less cryptanalysis)')
-            elif "Quantum-Safe" in name:
+            elif "Quantum-Resistant" in name:
                 weaknesses.append('Increased computation cost')
                 weaknesses.append('Complexity of implementation')
                 
@@ -879,10 +879,10 @@ def test_with_file_inputs(self, file_paths, progress_callback=None):
             pass
 
 def main():
-    """Enhanced command-line interface for quantum-safe hash benchmark utility."""
+    """Enhanced command-line interface for quantum-Resistant hash benchmark utility."""
     
     parser = argparse.ArgumentParser(
-        description="Advanced Quantum-Safe Hash Benchmark Framework",
+        description="Advanced Quantum-Resistant Hash Benchmark Framework",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     
@@ -913,7 +913,7 @@ def main():
                             default=[64, 1024, 16384, 1048576],
                             help='Data sizes to test (in bytes)')
     bench_parser.add_argument('--algorithms', '-a', nargs='+',
-                            choices=['sha256', 'sha512', 'quantum-safe', 'all'],
+                            choices=['sha256', 'sha512', 'quantum-Resistant', 'all'],
                             default=['all'],
                             help='Specific algorithms to benchmark')
     bench_parser.add_argument('--parallel', '-p', action='store_true',
@@ -1024,8 +1024,8 @@ def main():
             benchmark.register_hash_function("SHA-256 (FIPS 180-4)", benchmark.sha256_hash)
         if 'all' in algorithms or 'sha512' in algorithms:
             benchmark.register_hash_function("SHA-512 (FIPS 180-4)", benchmark.sha512_hash)
-        if 'all' in algorithms or 'quantum-safe' in algorithms:
-            benchmark.register_hash_function("Quantum-Safe (SHA-512 + BLAKE3)", benchmark.quantum_safe_hash)
+        if 'all' in algorithms or 'quantum-Resistant' in algorithms:
+            benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
         
         logger.info(f"Registered hash functions: {', '.join(benchmark.hash_functions.keys())}")
         
@@ -1137,7 +1137,7 @@ def main():
         # Register hash functions
         benchmark.register_hash_function("SHA-256 (FIPS 180-4)", benchmark.sha256_hash)
         benchmark.register_hash_function("SHA-512 (FIPS 180-4)", benchmark.sha512_hash)
-        benchmark.register_hash_function("Quantum-Safe (SHA-512 + BLAKE3)", benchmark.quantum_safe_hash)
+        benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
         
         # Analyze files with progress bar
         total_bytes = 0
@@ -1399,7 +1399,7 @@ def main():
         # Register all hash functions for comparison
         benchmark.register_hash_function("SHA-256 (FIPS 180-4)", benchmark.sha256_hash)
         benchmark.register_hash_function("SHA-512 (FIPS 180-4)", benchmark.sha512_hash)
-        benchmark.register_hash_function("Quantum-Safe (SHA-512 + BLAKE3)", benchmark.quantum_safe_hash)
+        benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
         
         input_data = None
         if os.path.exists(args.input):
@@ -1471,14 +1471,14 @@ def main():
             from prompt_toolkit import prompt
             from prompt_toolkit.completion import WordCompleter
             
-            print("\nQuantum-Safe Hash Benchmark Interactive Mode")
+            print("\nQuantum-Resistant Hash Benchmark Interactive Mode")
             print("===========================================\n")
             print("Type 'help' for a list of commands, 'exit' to quit.\n")
             
             benchmark = HashBenchmark(output_dir='interactive_results')
             benchmark.register_hash_function("SHA-256 (FIPS 180-4)", benchmark.sha256_hash)
             benchmark.register_hash_function("SHA-512 (FIPS 180-4)", benchmark.sha512_hash)
-            benchmark.register_hash_function("Quantum-Safe (SHA-512 + BLAKE3)", benchmark.quantum_safe_hash)
+            benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
             
             # Set up completer
             commands = WordCompleter([
@@ -1623,7 +1623,7 @@ def main():
         # Register all hash functions for technical analysis
         benchmark.register_hash_function("SHA-256 (FIPS 180-4)", benchmark.sha256_hash)
         benchmark.register_hash_function("SHA-512 (FIPS 180-4)", benchmark.sha512_hash)
-        benchmark.register_hash_function("Quantum-Safe (SHA-512 + BLAKE3)", benchmark.quantum_safe_hash)
+        benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
         
         logger.info(f"Running technical analysis with {args.iterations} iterations")
         
@@ -1671,7 +1671,7 @@ def main():
 
 def print_welcome_message():
     print("\n" + "="*80)
-    print(" Quantum-Safe Hash Benchmark Framework ".center(80, "="))
+    print(" Quantum-Resistant Hash Benchmark Framework ".center(80, "="))
     print("="*80 + "\n")
     
     print("This tool benchmarks and analyzes cryptographic hash functions with focus on")

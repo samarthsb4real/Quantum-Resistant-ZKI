@@ -1,28 +1,61 @@
-III. QUANTUM THREAT MODELS AND SECURITY BOUNDS
+III. QUANTUM THREAT MODELS FOR DATA INTEGRITY
 
-The necessity of extending hash boundaries natively roots itself in the mechanics of quantum search dynamics. Evaluating the defensive posture of cryptographic hash combiners requires rigorously quantifying their quantum query complexities against well-accepted adversarial models. 
+The security of data integrity verification relies entirely on the computational hardness of inverting or colliding the underlying hash function. Under quantum computing paradigms, these hardness assumptions degrade dramatically. This section formalizes the specific quantum attack vectors that threaten hash-based integrity mechanisms and derives the minimum security thresholds required for quantum-resistant integrity frameworks.
 
-A. Preimage Resistance and Grover's Search Algorithm
-Preimage resistance (or one-wayness) dictates the cryptanalytic difficulty of deriving a source integer input $x$ given a hash digest $H(x) = y$. In classical compute paradigms, for an $n$-bit hash function modeled as a uniformly random oracle, a brute-force search algorithm requires bounded $O(2^n)$ queries to discover an input mapping to the target element with high probability. 
+A. Integrity Tag Forgery via Grover's Algorithm
+The most direct quantum attack on data integrity is integrity tag forgery via preimage inversion. Given a published integrity digest y = H(x) for some legitimate data x, an adversary seeks any input x' (which may differ from x) such that H(x') = y. If successful, the adversary can substitute arbitrary malicious data x' in place of x, and any integrity verification check will accept x' as authentic.
 
-Grover's algorithm functions as a quantum mechanical amplitude amplification protocol. Given a quantum oracle representing the hash function evaluation mapping, the algorithm initializes a uniform superposition of all possible $2^n$ basis states. Over roughly $\frac{\pi}{4} \sqrt{2^n}$ iterations, the algorithm systematically amplifies the probability amplitude of the specific computational basis state $|x\rangle$ that satisfies $H(x) = y$. 
-Consequently, the post-quantum asymptotic security margin collapses drastically:
-$$ \mathcal{T}_{Grover} \approx O(2^{n/2}) $$ 
-For SHA-256 or standalone BLAKE3, the quantum preimage search domain falls to a 128-bit complexity threshold. While 128 bits denotes the baseline requirement for minimal theoretical modern security (NIST Level 1 equivalence), highly conservative architectures (military, diplomatic, large-scale financial ledgers) demand significantly wider safety margins approaching 256 bits of bounded security.
+Classically, for an n-bit hash function modeled as a random oracle, brute-force preimage search requires O(2^n) evaluations. Grover's algorithm (1996) provides a quantum speedup by exploiting amplitude amplification. The algorithm initializes a uniform superposition of all 2^n possible basis states, then iteratively applies a reflect-about-the-mean operation interleaved with oracle queries. After approximately (π/4)√(2^n) iterations, the target preimage state is measured with high probability.
 
-B. Collision Search and The Brassard-Høyer-Tapp (BHT) Algorithm
-A more profound degradation strikes the bounds of collision resistance—the difficulty of isolating any two inputs $x_1 \neq x_2$ such that $H(x_1) = H(x_2)$. Classically, the bounds of general collision discovery adhere to the generalized Birthday Paradox, bounding the threshold at approximately $O(2^{n/2})$ queries before collisions map over an arbitrary state space. 
+The resulting quantum preimage complexity is:
+   T_Grover ≈ O(2^{n/2})
 
-Quantumly, a targeted synthesis of Grover’s algorithm structured alongside classical localized birthday techniques spawns the Brassard-Høyer-Tapp (BHT) algorithm. The implementation necessitates an attacker leveraging sufficient quantum RAM (QRAM) to classically map out intermediate collision pairs against a structured quantum search matrix. Due to its optimized structure, BHT reduces the complexity matrix to the fractional cube root:
-$$ \mathcal{T}_{BHT} \approx O(2^{n/3}) $$
-For a 256-bit output structure space, bounded algorithmic iterations translate directly to an abysmal $O(2^{85.3})$ theoretical query scope. An 85.3-bit security bound implies catastrophic inadequacy against the long-term operational lifespan of current secure systems against motivated nation-state actors holding quantum compute clusters.
+For specific hash functions used in integrity verification, this yields the following security margins:
 
-C. Synthesizing Protection Thresholds
-To defend against both Grover and BHT vectors comprehensively, the combinatorial framework requires raising $n$ to $512$ bits minimum. 
-For 512-bit native mapping:
-1) **Grover Preimage Security:** $O(2^{512/2}) = 256$ bits of quantum security.
-2) **BHT Collision Security:** $O(2^{512/3}) = 170.6$ bits of quantum security.
+   Algorithm        Output (n)    Classical Preimage    Quantum Preimage (Grover)
+   SHA-256          256 bits      256 bits              128 bits
+   BLAKE3           256 bits      256 bits              128 bits
+   SHA-512          512 bits      512 bits              256 bits
+   SHA3-512         512 bits      512 bits              256 bits
+   BLAKE3-KDF-SHA512  512 bits    512 bits              256 bits
 
-This perfectly corresponds with the requirements formulated by the NIST Post-Quantum Specification targeting 'Level 5' robustness—ensuring the output mapping functionally equals or radically supersedes the quantum structural search constraints placed on AES-256 key block search domains. 
+The 128-bit quantum preimage security of SHA-256 and BLAKE3 satisfies only NIST Post-Quantum Level 1 (equivalent to AES-128 security). For critical infrastructure — military communications, financial ledgers, long-lived digital certificates — NIST mandates Level 5 security (equivalent to AES-256), requiring 256-bit quantum preimage resistance. This threshold is achievable only with 512-bit output digests.
 
-The rationale for not merely defaulting functionally to native SHA-512 relies upon algorithmic volatility assumptions. By integrating BLAKE3 via a KDF boundary structure inside the 512-bit expansion field, the formulation achieves NIST Level 5 parameters under quantum paradigms, while systematically defusing the catastrophic failure metrics associated with the potential cryptanalytic cracking of any singular algorithm's internal bit shifting logic.
+B. Integrity Collision Forgery via the BHT Algorithm
+A more sophisticated quantum attack on data integrity is collision exploitation. Rather than forging a preimage for a specific integrity tag, the adversary seeks any two distinct inputs x₁ ≠ x₂ such that H(x₁) = H(x₂). If both x₁ and x₂ hash to the same value, the adversary can present x₁ for signing or verification and later substitute x₂ — which could contain entirely different (malicious) data — while the integrity tag remains valid.
+
+Classically, collision search follows the birthday bound: approximately O(2^{n/2}) hash evaluations are needed to find a collision with probability ≥ 0.5. The Brassard-Høyer-Tapp (BHT) algorithm (1998) combines Grover's quantum search with classical birthday tables to achieve collision search in:
+   T_BHT ≈ O(2^{n/3})
+
+This represents a more severe degradation than Grover's preimage attack. The quantum collision security for common integrity hash functions:
+
+   Algorithm        Output (n)    Classical Collision    Quantum Collision (BHT)
+   SHA-256          256 bits      128 bits               85.3 bits
+   BLAKE3           256 bits      128 bits               85.3 bits
+   SHA-512          512 bits      256 bits               170.7 bits
+   SHA3-512         512 bits      256 bits               170.7 bits
+   BLAKE3-KDF-SHA512  512 bits    256 bits               170.7 bits
+
+The 85.3-bit quantum collision security of SHA-256 is catastrophically insufficient for long-term security. Even SHA-512's 170.7-bit quantum collision security, while significantly stronger, should be viewed in the context of decades-long key lifetimes: data integrity guarantees for archived government documents, intellectual property, or medical records may need to persist for 50+ years.
+
+C. Synthesizing Quantum-Safe Integrity Requirements
+Combining the Grover and BHT analysis, the minimum requirements for a quantum-resistant data integrity framework are:
+
+1) Output Digest Size: A minimum of 512 bits is non-negotiable to achieve NIST Level 5 preimage security under Grover's algorithm (2^{512/2} = 2^{256} quantum operations).
+
+2) Collision Security Margin: With 512-bit output, BHT collision security is 170.7 bits — well above the 128-bit minimum considered secure for contemporary threat models.
+
+3) Algorithmic Diversity: Meeting the output-length requirement alone is insufficient. A framework relying solely on SHA-512 remains vulnerable to a potential SHA-2-specific cryptanalytic breakthrough. Similarly, a standalone BLAKE3 configuration cannot meet the 512-bit output requirement in its default mode (256-bit output). The framework must combine architecturally distinct primitives to provide resilience against algorithm-specific failures.
+
+4) Domain Separation: To maximize the hedging benefit of combining multiple primitives, the combined components must be functionally independent. If both components share the same internal state initialization, a vulnerability affecting that initialization compromises both simultaneously. The BLAKE3 KDF mode provides natural domain separation by deriving a unique IV from a context string, ensuring that its computation follows a different mathematical trajectory than standard BLAKE3.
+
+D. Threat Model Summary
+Our framework defends against the following adversary classes:
+
+1) Classical Adversary: A computationally bounded adversary with access to standard hardware. The framework provides 512-bit preimage resistance and 256-bit collision resistance — equivalent to standalone SHA-512.
+
+2) Quantum Adversary (Grover): A quantum-capable adversary performing preimage search. The framework provides 256-bit quantum preimage security (NIST Level 5), compared to only 128 bits for SHA-256 or BLAKE3.
+
+3) Quantum Adversary (BHT): A quantum-capable adversary performing collision search. The framework provides 170.7-bit quantum collision security, compared to only 85.3 bits for SHA-256 or BLAKE3.
+
+4) Cryptanalytic Adversary: An adversary exploiting mathematical weaknesses in a specific hash algorithm (as occurred with MD5 and SHA-1). The framework's three-primitive hedging guarantee ensures that a structural break in any single component (standard BLAKE3, BLAKE3-KDF, or SHA-512) does not compromise overall integrity.

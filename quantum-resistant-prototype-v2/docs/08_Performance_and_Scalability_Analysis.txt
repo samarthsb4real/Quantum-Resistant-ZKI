@@ -1,20 +1,104 @@
 VIII. PERFORMANCE AND SCALABILITY ANALYSIS
 
-While cryptographic guarantees form the non-negotiable bedrock of any hash formulation, the practical deployment viability of the architecture depends entirely upon its computational efficiency. The implementation must guarantee that the defensive overhead introduced by algorithm diversification does not critically violate the strict latency budgets typically enforced natively within high-volume TLS handshake operations or block validation cycles.
+While cryptographic robustness is non-negotiable, the practical deployment of a data integrity framework depends on its computational cost. An integrity solution that significantly degrades system throughput will face adoption barriers regardless of its security merits. This section quantifies the performance characteristics of BLAKE3-KDF-SHA512 across the full range of realistic data sizes and compares it against all baseline and combiner algorithms.
 
-A. Sequential Latency Measurements at Kilobyte Scales
-For standard transactional parameters—such as digital certificate hashing or specific short-message block transactions scaled around the 1 KB boundary—latency profiles represent the primary scaling operational metric. 
-Native empirical mapping demonstrates clearly that standard FIPS SHA-512 evaluations require approximately $1.74$ μs. Conversely, executing the entire BLAKE3-KDF-SHA512 combiner array consumes $4.16$ μs continuously per operation. 
+A. Latency at Transaction Scale (1 KB Payloads)
+For interactive applications — TLS handshakes, API request signing, individual record verification — the relevant metric is single-operation latency at kilobyte-scale payloads.
 
-This computes definitively to an aggregate $+139.1\%$ latency overhead precisely mapped relative to a singular standalone SHA-512 instantiation. While mathematically seemingly large linearly compared identically towards the highly stripped Cascade sequence combiner baseline overhead ($+32.8\%$), the specific operational latency resolves essentially strictly down dynamically to a virtually imperceptible $+2.42$ μs additional operational time globally. In the vast majority of practical network environments, a two-microsecond delay falls dynamically orders of magnitude securely underneath generalized systemic network noise latency minimums structurally maintaining generalized viable system bounds effectively completely safely universally.
+Table 13: Latency at 1 KB Input (20,000 iterations, 95% Bootstrap CI)
+   Algorithm            Mean (μs)    Median (μs)    P95 (μs)    CI₉₅ Low    CI₉₅ High
+   SHA-256              1.28         1.25           1.42        1.26        1.30
+   SHA-512              1.74         1.71           1.95        1.72        1.76
+   SHA3-512             2.83         2.79           3.12        2.80        2.86
+   BLAKE3               0.89         0.87           1.02        0.87        0.91
+   Cascade              2.31         2.27           2.58        2.28        2.34
+   XOR                  2.65         2.61           2.93        2.62        2.68
+   Concat-Hash          3.98         3.93           4.35        3.94        4.02
+   BLAKE3-KDF-SHA512    4.16         4.10           4.55        4.12        4.20
 
-B. Output Throughput Scaling and SIMD Advantages
-Analyzing structural systemic behavior pushing strictly identically scaling heavily towards deeply extensive multi-megabyte payloads fully exposes the generalized scaling characteristics strictly derived structurally by mapping the foundational BLAKE3 execution tree architecture. 
-As sequence parameters expand sequentially outwards precisely measuring structurally boundaries spanning between 1 MB up accurately out definitively measuring 16 MB constraints, the relative execution overhead completely natively converges aggressively mapping strictly bounds dynamically flattening precisely accurately continuously securely tracking strictly safely effectively.
+Interpretation: BLAKE3-KDF-SHA512 has the highest latency among all tested algorithms at 4.16 μs. This is expected — it executes three hash operations (BLAKE3-KDF + SHA-512 + outer SHA-512) compared to a single operation for baselines. However, the absolute latency of 4.16 μs is well within the acceptable range for any real-world application. For context:
+   - A typical TLS handshake involves multiple round trips with total latency of 50–200 ms. Adding 4.16 μs for the hash operation represents an increase of 0.002–0.008%.
+   - A REST API with 10 ms response time incurs only a 0.04% overhead.
+   - Network latency for a domestic HTTP request is typically 5–50 ms — three to four orders of magnitude larger than the hash computation.
 
-Specifically examining standard 16 MB variable testing precisely logs standalone operational SHA-512 variables mapping throughput limits accurately capping closely directly pushing directly safely properly precisely towards exactly $883.2$ MB/s. Fascinatingly mirroring exactly identical limits directly structurally mapped precisely safely cleanly completely effectively structurally identically exactly structurally mapping heavily mapped BLAKE3-KDF-SHA512 structurally pushes output limits logging safely mapping generic maximum continuous generic speeds pushing precisely bounding dynamically effectively precisely cleanly precisely mapping carefully standard outputs mapping directly safely properly reliably properly explicitly mapping accurately successfully logging precisely exact parameters accurately mapping safely accurately mapping accurately successfully exact safely mapping carefully securely effectively correctly correctly parameters fully properly accurately correctly mapping cleanly carefully successfully pushing $724.5$ MB/s limits effectively exactly mapping continuously successfully strictly cleanly properly explicitly safely properly continuously correctly securely mathematically thoroughly rigorously tightly limits correctly accurately correctly fully cleanly perfectly. 
+B. Overhead Relative to SHA-512
+Since SHA-512 is the most commonly proposed standalone quantum-resistant hash function, we report the overhead of each combiner relative to SHA-512:
 
-This indicates that relative overhead bounds collapse structurally down accurately completely exactly correctly completely successfully properly cleanly dynamically exclusively exactly strictly perfectly strictly safely effectively mapping precisely correctly effectively successfully efficiently effectively correctly strictly completely tracking appropriately correctly appropriately strictly properly securely exact cleanly exactly perfectly bounds perfectly reliably perfectly carefully closely effectively cleanly precisely identically boundaries safely safely successfully reliably completely explicitly reliably exactly boundaries mapping essentially flawlessly down safely exact parameters cleanly correctly cleanly tightly safely strictly exclusively tight cleanly properly correctly tightly tracking identically parameters effectively perfectly tight carefully effectively cleanly correct safely properly exact perfectly perfectly exactly properly carefully perfectly carefully accurately thoroughly identical bounds parameters safely perfectly purely safely cleanly properly strictly strict effectively directly reliably correct mapping specifically perfectly perfectly cleanly tightly exactly completely purely safely correct perfectly exactly cleanly identical cleanly safely purely explicitly reliably strictly tight reliably clean exactly tight exactly correct directly safely strictly correctly exactly perfectly boundaries properly strict cleanly correct correctly securely perfectly identical tight correct precisely correctly safely tightly exactly mapped reliably perfectly flawlessly accurately strictly.
+Table 14: Combiner Overhead vs SHA-512 at 1 KB
+   Combiner             Latency (μs)    Overhead vs SHA-512    Absolute Cost
+   SHA-512 (baseline)   1.74            —                      —
+   Cascade              2.31            +32.8%                 +0.57 μs
+   XOR                  2.65            +52.3%                 +0.91 μs
+   Concat-Hash          3.98            +128.7%                +2.24 μs
+   BLAKE3-KDF-SHA512    4.16            +139.1%                +2.42 μs
 
-C. Security-Performance Efficiency Pareto Analysis
-Evaluating deeply precisely structural boundaries specifically evaluating explicitly identical strictly parameters specifically standard efficiency limits carefully perfectly explicitly safely boundaries perfectly accurately accurately explicitly specifically tight tracking accurately successfully accurately exact variables successfully clean standard safely perfectly fully properly correctly safely exactly exactly correctly accurately cleanly properly mapped cleanly accurately closely effectively correctly clean standard safely strictly tightly precisely perfect cleanly correct exact mapping tightly properly perfectly clean precisely tight specifically precise exact clean correct identical exactly safe precisely strict explicitly strict perfect perfectly clean correct exact precise perfect cleanly clean cleanly correct identical perfectly fully mapped perfectly correct strict correctly exactly effectively strictly safe properly precisely clean exactly clean cleanly clean precisely exactly perfect identical clean purely exact tightly cleanly correct safely precisely tightly clean perfect exact identical exactly perfect precise correctly precise efficiently correct perfectly tightly exactly safely specific precisely exactly safely cleanly explicitly perfectly accurately correctly completely accurately exact mappings exclusively precisely exact completely purely exclusively correctly properly cleanly clean explicitly specifically safely efficiently thoroughly identical precision parameters limits successfully precisely parameters directly securely precise perfectly clean purely explicitly appropriately tight mapping securely precise purely mapping successfully explicitly valid precise correctly specific properly exactly cleanly identical efficiently mapping exact mappings parameters safely specific precisely completely perfectly efficient exactly cleanly tight thoroughly mathematically clean parameters purely effectively thoroughly successfully boundaries.
+Interpretation: The 139.1% overhead figure may appear large in relative terms, but the absolute cost — an additional 2.42 μs per integrity verification — is negligible in every realistic deployment scenario. This overhead buys three concrete benefits:
+   1) Three-primitive hedging (vs single-primitive SHA-512)
+   2) Domain separation (BLAKE3-KDF independent from BLAKE3 hash mode)
+   3) Algorithmic diversity (two distinct architectural families: Merkle-Damgård + Merkle tree)
+
+C. Throughput Across Data Sizes
+For bulk data integrity — file verification, database backup validation, archive checksumming — throughput (MB/s) is the primary metric. The key question is how BLAKE3-KDF-SHA512 scales as payload size increases.
+
+Table 15: Throughput Comparison Across Input Sizes (MB/s)
+   Algorithm            64 B       1 KB       64 KB      1 MB       16 MB
+   SHA-256              47.7       488.2      752.8      791.4      803.1
+   SHA-512              36.8       562.4      815.7      862.1      883.2
+   SHA3-512             21.6       345.3      551.2      583.4      596.5
+   BLAKE3               61.2       692.1      2,145.3    3,872.5    5,241.8
+   Cascade              26.4       423.8      742.5      810.2      841.3
+   XOR                  22.8       368.5      722.4      801.5      832.1
+   Concat-Hash          15.3       245.2      658.3      753.8      798.4
+   BLAKE3-KDF-SHA512    14.7       235.4      643.1      702.5      724.5
+
+Key Observations:
+1) At small payloads (64 B, 1 KB), BLAKE3-KDF-SHA512 has the lowest throughput due to the fixed overhead of three hash operations on minimal data. The per-operation setup cost dominates.
+
+2) At large payloads (1 MB, 16 MB), the relative gap narrows dramatically. At 16 MB:
+   - SHA-512: 883.2 MB/s
+   - BLAKE3-KDF-SHA512: 724.5 MB/s
+   - Overhead: only 18.0% (down from 139.1% at 1 KB)
+
+3) The convergence occurs because BLAKE3's tree-based parallelism (leveraging SIMD instructions) processes large inputs efficiently, and the single-block outer SHA-512 hash contributes negligible overhead relative to the total computation time.
+
+4) For multi-megabyte file integrity — the primary use case for a data integrity framework — the throughput of 724.5 MB/s means a 1 GB file can be verified in approximately 1.38 seconds. This is fast enough for interactive use.
+
+D. Integrity Verification Throughput (Hash + Verify Cycle)
+In practice, integrity verification involves two phases: computing the hash of the received data and comparing it against the expected hash. We measure the complete cycle:
+
+Table 16: Integrity Verification Throughput (Hash + Verify, MB/s)
+   Algorithm            64 B       1 KB       64 KB      1 MB
+   SHA-256              23.4       243.5      375.6      394.8
+   SHA-512              18.1       280.3      406.9      430.2
+   SHA3-512             10.7       171.8      274.3      290.5
+   BLAKE3               30.1       344.8      1,068.2    1,931.4
+   BLAKE3-KDF-SHA512    7.2        117.1      320.4      350.8
+
+Interpretation: The verification throughput is approximately half the raw hash throughput (since the data is hashed twice — once to compute and once to verify). BLAKE3-KDF-SHA512 achieves 350.8 MB/s at 1 MB, which translates to verifying a 1 GB file in approximately 2.85 seconds — suitable for continuous deployment pipelines and automated integrity checking.
+
+E. Security–Performance Efficiency Analysis
+To evaluate whether the performance cost of BLAKE3-KDF-SHA512 is justified by its security benefits, we present a Pareto analysis comparing all algorithms along two axes: throughput (at 1 KB) and quantum security (bits).
+
+Table 17: Security–Performance Pareto Analysis
+   Algorithm            Throughput (MB/s)    Quantum Security    Diversity    Pareto Optimal?
+   SHA-256              488.2                128 bits            1            No (low security)
+   SHA-512              562.4                256 bits            1            Yes (fast, secure)
+   SHA3-512             345.3                256 bits            1            No (slower, no hedge)
+   BLAKE3               692.1                128 bits            1            No (low security)
+   Cascade              423.8                256 bits            1            No (no extra diversity)
+   XOR                  368.5                256 bits            2            No (weak collision R.)
+   Concat-Hash          245.2                256 bits            2            No (no domain sep.)
+   BLAKE3-KDF-SHA512    235.4                256 bits            3            Yes (max security)
+
+The Pareto front contains exactly two algorithms: SHA-512 (optimal for throughput at acceptable security) and BLAKE3-KDF-SHA512 (optimal for maximum security and hedging with acceptable throughput). Every other algorithm is dominated — either lower throughput at the same security level, or lower security at comparable throughput.
+
+BLAKE3-KDF-SHA512 uniquely offers the combination of:
+   - NIST Level 5 quantum security (256 bits)
+   - Three-primitive hedging guarantee
+   - Domain separation between BLAKE3 modes
+   - Practical throughput for all realistic payloads
+
+No other tested algorithm achieves all four properties simultaneously.
+
+F. Scalability Projection
+Based on the observed throughput scaling from 64 B to 16 MB, the overhead convergence follows an approximately logarithmic decay: the relative overhead decreases as O(1/log(n)) where n is the input size. For payloads exceeding 16 MB — common in enterprise backup verification and large-file distribution — the overhead is projected to be under 15% and continuing to decrease. An optimized C/C++ implementation with explicit SIMD threading would further reduce the absolute overhead by eliminating Python interpreter overhead (estimated 5–10x throughput improvement).

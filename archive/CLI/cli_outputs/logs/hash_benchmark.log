@@ -10,3 +10,34 @@ File analysis report saved to cli_outputs/analyses/20250425-133113/file_analysis
 Analysis completed. Results saved to /home/samarth/projects/quantm/CLI/cli_outputs/analyses/20250425-133113
 Generating analysis visualizations...
 Visual analysis report saved to cli_outputs/analyses/20250425-133113/visual_analysis_report.md
+Registered hash functions: SHA-256 (FIPS 180-4), SHA-512 (FIPS 180-4), Quantum-Safe (SHA-512 + BLAKE3)
+Running quick benchmark suite...
+Benchmark completed in 1.30 seconds
+Results saved to /home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli_outputs/benchmarks/20260326-094418
+Unhandled exception: local variable 'conclusion' referenced before assignment
+Traceback (most recent call last):
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1707, in <module>
+    sys.exit(main())
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1122, in main
+    report = benchmark.generate_report()
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/main/main.py", line 1128, in generate_report
+    conclusion += "Insufficient data to generate overall scores. Run a full benchmark with 'benchmark' command for complete analysis.\n"
+UnboundLocalError: local variable 'conclusion' referenced before assignment
+Registered hash functions: SHA-256 (FIPS 180-4), SHA-512 (FIPS 180-4), Quantum-Safe (SHA-512 + BLAKE3)
+Running standard benchmark suite...
+Unhandled exception: HashBenchmark.test_with_file_inputs() missing 1 required positional argument: 'file_paths'
+Traceback (most recent call last):
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1707, in <module>
+    sys.exit(main())
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1092, in main
+    results = benchmark.run_all_benchmarks()
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/main/main.py", line 774, in run_all_benchmarks
+    self.test_with_file_inputs()
+TypeError: HashBenchmark.test_with_file_inputs() missing 1 required positional argument: 'file_paths'
+Unhandled exception: 'HashBenchmark' object has no attribute 'quantum_Resistant_hash'
+Traceback (most recent call last):
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1707, in <module>
+    sys.exit(main())
+  File "/home/samarth/projects/Quantum-Resistant-ZKI/archive/CLI/cli.py", line 1402, in main
+    benchmark.register_hash_function("Quantum-Resistant (SHA-512 + BLAKE3)", benchmark.quantum_Resistant_hash)
+AttributeError: 'HashBenchmark' object has no attribute 'quantum_Resistant_hash'
